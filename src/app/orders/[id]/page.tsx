@@ -1,2 +1,2 @@
-import {Unavailable} from '@/components/local/unavailable';
-export default function Page(){return <Unavailable title="Buyurtma tafsilotlari"/>}
+import {Orders} from '@/components/demo/commerce';
+export default async function Page({params}:{params:Promise<{id:string}>}){return <Orders id={(await params).id}/>}

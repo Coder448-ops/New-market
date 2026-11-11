@@ -1,2 +1,2 @@
-import {Cart} from '@/components/local/cart';
+import {Cart} from '@/components/demo/commerce';
 export default function Page(){return <Cart/>}

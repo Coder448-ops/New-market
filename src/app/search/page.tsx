@@ -1,2 +1,2 @@
-import {Catalog} from '@/components/local/catalog';
-export default async function Page({searchParams}:{searchParams:Promise<{q?:string}>}){const {q}=await searchParams;return <Catalog initialQuery={typeof q==='string'?q:''}/>}
+import {Catalog} from '@/components/demo/storefront';
+export default async function Page({searchParams}:{searchParams:Promise<{q?:string}>}){return <Catalog initialQuery={(await searchParams).q||''}/>}

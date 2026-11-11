@@ -1,2 +1,2 @@
-import {Unavailable} from '@/components/local/unavailable';
-export default function Page(){return <Unavailable title="Hisob"/>}
+import {Account} from '@/components/demo/account';
+export default function Page(){return <Account/>}

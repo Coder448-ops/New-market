@@ -1,2 +1,2 @@
-import {Unavailable} from '@/components/local/unavailable';
-export default function Page(){return <Unavailable title="Admin paneli"/>}
+import {Admin} from '@/components/demo/admin';
+export default function Page(){return <Admin/>}

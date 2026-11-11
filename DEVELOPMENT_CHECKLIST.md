@@ -1,11 +1,12 @@
-# NEX MARKET — holat
+# NEX MARKET — rivojlantirish ro‘yxati
 
-- [x] Foydalanuvchi tanlovi: bazasiz, faqat brauzerda saqlash.
-- [x] Mahalliy mahsulotlarni yaratish, tahrirlash, o‘chirish; saralanganlar va savat.
-- [x] Ma’lumotlarning faqat ushbu brauzerga tegishliligini ko‘rsatish; haqiqiy checkout va loginni o‘chirish.
-- [x] Zaxira faylini saqlash va tasdiq bilan qayta tiklash.
-- [ ] Keng qamrovli browser/E2E, bir nechta tab va turli qurilmalardagi testlar.
-- [ ] Rasm optimizatsiyasi, accessibility va responsive audit.
-- [ ] `npm audit` natijalarini ko‘rib chiqish.
-
-Bu haqiqiy marketplace emas: umumiy katalog, serverdagi ishonchli narx, hisoblar, administrator, buyurtmalar va to‘lovlar mavjud emas. Foydalanuvchi tanlagan arxitektura bu cheklovni keltirib chiqaradi.
+- [x] Mavjud mahalliy katalog va JSON backupni alohida yo‘llarda saqlash.
+- [x] Demo seed: 60 mahsulot, 12 turkum, 20+ brend, 15 sharh, 10 buyurtma, 5 banner va 5 kupon.
+- [x] Demo katalog, qidiruv, filtrlar, kartalar, tez ko‘rish, saralanganlar, taqqoslash, savat va to‘rt bosqichli demo checkout.
+- [x] Demo profil, buyurtmalar, bildirishnomalar, rasmiy bo‘lmagan demo sharh va savollar.
+- [x] Parolsiz, xavfsiz emasligi ko‘rsatilgan demo admin: mahsulot va qoldiq, buyurtma holati, turkum, banner, mavjud kuponlar.
+- [x] Demo to‘lovlar haqiqiy emasligi ko‘rsatilgan; lokal ma’lumot alohida saqlanadi.
+- [ ] To‘liq premium talablar: alohida xarid tarixi, ko‘proq bosh sahifa bo‘limlari, batafsil spetsifikatsiya/variantlar, to‘liq notification/toast va modal accessibility.
+- [ ] Haqiqiy server/backend, onlayn baza, autentifikatsiya, xavfsiz admin, xaridor tekshiruvi va sharh moderatsiyasi, real fayl saqlash va order transaction.
+- [ ] Haqiqiy brauzer E2E, multi-tab, responsive 360–1920px va accessibility audit; storage xato holatlarini to‘liq ko‘rsatish.
+- [ ] `npm audit` xulosalarini ko‘rib chiqish; rasm optimizatsiya ogohlantirishlari.

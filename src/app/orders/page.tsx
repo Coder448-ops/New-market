@@ -1,2 +1,2 @@
-import {Unavailable} from '@/components/local/unavailable';
-export default function Page(){return <Unavailable title="Buyurtmalar"/>}
+import {Orders} from '@/components/demo/commerce';
+export default function Page(){return <Orders/>}
