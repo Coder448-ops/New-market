@@ -1,5 +1,4 @@
-// Hand-written DB types mirroring supabase/migrations/20260101000000_init.sql
-// Regenerate with: npm run db:types (requires supabase CLI + local stack)
+// Domain row types for database/migrations/001_init.sql
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -34,6 +33,6 @@ interface RawDatabase {
   };
 }
 
-// Supabase requires the complete generated table shape, including write types and relationships.
+// Shared row type map.
 type Tables = RawDatabase["public"]["Tables"];
 export type Database = { public: { Tables: { [K in keyof Tables]: Tables[K] & { Insert: Partial<Tables[K]["Row"]>; Update: Partial<Tables[K]["Row"]>; Relationships: [] } }; Views: Record<string, never>; Functions: Record<string, never>; Enums: Record<string, never>; CompositeTypes: Record<string, never> } };

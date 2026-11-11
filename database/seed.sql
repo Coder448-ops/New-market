@@ -1,6 +1,6 @@
 -- NEX MARKET — Development seed data
 -- Run AFTER migrations. Product images are placeholders to be replaced
--- with real uploads via Supabase Storage in production.
+-- with managed storage uploads before production.
 
 insert into public.categories (name, slug, description, sort_order) values
   ('Elektronika', 'elektronika', 'Telefonlar, noutbuklar va aksessuarlar', 1),

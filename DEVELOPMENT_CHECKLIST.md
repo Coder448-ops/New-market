@@ -1,19 +1,14 @@
 # NEX MARKET — development checklist
 
-Status: **incomplete; do not deploy as a production marketplace**. This is a persistent handoff, not a claim of production readiness.
+Holat: tugallanmagan; real savdo uchun tayyor emas.
 
-- [x] Foundation, dependencies, layout, basic responsive navigation
-- [x] Initial schema, RLS declarations, seed data and Supabase client setup
-- [x] Basic database-backed home, catalog, search, product page
-- [x] Basic auth, profile, local cart, COD checkout and order history code
-- [x] Admin authorization, dashboard, limited product/inventory/order/review management code
-- [x] Typecheck, lint, unit/static tests, production build in unconfigured environment
-- [ ] Apply and test migration and seed against a real Supabase project, test every RLS policy and concurrent checkout. SQL has not been executed here.
-- [ ] Fully implement customer cart synchronization, addresses, comprehensive product gallery/specifications and search/category features
-- [ ] Complete all admin CRUD, variants, uploads, order cancellation/restocking, reporting, filters, settings and banners
-- [ ] Implement Payme and Click protocols and reconciliation against provider sandboxes; both deliberately disabled
-- [ ] Complete storage uploads/deletion and image validation
-- [ ] Replace provisional policies/contact content with merchant-approved legal and business information
-- [ ] Add distributed rate limiting, body-size enforcement at edge, security review and production dependency audit remediation
-- [ ] Add full integration and browser tests including permissions, auth and stock contention; test responsive breakpoints
-- [ ] Production SEO, pagination at scale, accessible interactions and image optimization
+- [x] Supabase dependency va client kodlarini olib tashlash; mustaqil PostgreSQL, hashed session va SMTP asosini yaratish.
+- [x] PGlite bilan yangi migratsiya, seed, narx, qoldiq va idempotency asosiy holatlarini tekshirish.
+- [ ] Tashqi PostgreSQL, TLS, migratsiya, parallel checkout va barcha ruxsatlarni tekshirish.
+- [ ] SMTP bilan registration, tasdiqlash, kirish, chiqish, parol tiklashni E2E sinash; auth xavfsizlik auditi va umumiy rate limiter.
+- [ ] To‘liq admin CRUD, variantlar, order bekor qilish/restock, hisobot, filtr, sozlamalar va bannerlar.
+- [ ] Doimiy obyekt storage va xavfsiz upload/o‘chirish, real product rasmlari.
+- [ ] Savat sinxronlash, manzillar, batafsil gallery/specifications va qidiruv/turkumlar.
+- [ ] Payme va Click protokollari, imzo tekshiruvi, reconciliation va sandbox testlar.
+- [ ] Legal/contact mazmuni, SEO, accessibility, responsive va E2E testlar.
+- [ ] Dependency audit kamchiliklarini tuzatish; faqat keyin ishlab chiqarishga tayyorlikni baholash.

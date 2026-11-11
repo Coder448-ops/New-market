@@ -5,23 +5,23 @@ export const phoneSchema = z
   .regex(/^(\+998[\s-]?)?(\d{2}[\s-]?)?\d{3}[\s-]?\d{2}[\s-]?\d{2}$/, "Telefon raqam noto‘g‘ri formatda");
 
 export const registerSchema = z.object({
-  firstName: z.string().min(2, "Ism kamida 2 ta belgi bo‘lishi kerak"),
-  lastName: z.string().min(2, "Familiya kamida 2 ta belgi bo‘lishi kerak"),
-  email: z.string().email("Email noto‘g‘ri"),
+  firstName: z.string().min(2, "Ism kamida 2 ta belgi bo‘lishi kerak").max(100),
+  lastName: z.string().min(2, "Familiya kamida 2 ta belgi bo‘lishi kerak").max(100),
+  email: z.string().email("Email noto‘g‘ri").max(254),
   phone: phoneSchema.optional().or(z.literal("")),
-  password: z.string().min(8, "Parol kamida 8 ta belgi bo‘lishi kerak"),
+  password: z.string().min(8, "Parol kamida 8 ta belgi bo‘lishi kerak").max(256),
 });
 
 export const loginSchema = z.object({
-  email: z.string().email("Email noto‘g‘ri"),
-  password: z.string().min(1, "Parolni kiriting"),
+  email: z.string().email("Email noto‘g‘ri").max(254),
+  password: z.string().min(1, "Parolni kiriting").max(256),
 });
 
 export const checkoutSchema = z.object({
   firstName: z.string().min(2, "Ismni kiriting"),
   lastName: z.string().min(2, "Familiyani kiriting"),
   phone: phoneSchema,
-  email: z.string().email("Email noto‘g‘ri").optional().or(z.literal("")),
+  email: z.string().email("Email noto‘g‘ri").max(254).optional().or(z.literal("")),
   region: z.string().min(1, "Hududni tanlang"),
   city: z.string().min(1, "Shaharni kiriting"),
   address: z.string().min(5, "Manzilni batafsil yozing"),
