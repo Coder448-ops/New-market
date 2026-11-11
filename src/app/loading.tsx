@@ -1,0 +1,1 @@
+export default function Loading(){return <div className="wrap py-12"><div className="h-10 w-56 animate-pulse rounded-xl bg-gray-100"/><div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-5">{Array.from({length:10},(_,i)=><div key={i} className="aspect-[4/5] animate-pulse rounded-2xl bg-gray-100"/>)}</div></div>}

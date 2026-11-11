@@ -1,0 +1,2 @@
+export const metadata={title:'Maxfiylik siyosati'};
+export default function Page(){return <div className="wrap py-14"><h1 className="text-3xl font-bold">Maxfiylik siyosati</h1><p className="mt-6 max-w-3xl leading-7 text-gray-600">Hisobingiz va buyurtmalaringizga oid ma’lumotlar xizmat ko‘rsatish uchun ishlatiladi. Ishga tushirishdan oldin savdogar ushbu siyosatni qonunchilikka muvofiq to‘ldirishi kerak.</p></div>}

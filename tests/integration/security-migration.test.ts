@@ -1,0 +1,4 @@
+import {describe,it,expect} from 'vitest';
+import {readFileSync} from 'node:fs';
+const sql=readFileSync('supabase/migrations/20260101000000_init.sql','utf8');
+describe('migration security declarations (static checks, not a live database test)',()=>{it('revokes public order function and client order insertion',()=>{expect(sql).toContain('drop policy "own orders insert"');expect(sql).toMatch(/revoke all on function public\.create_order[\s\S]*from public, anon, authenticated/)});it('requires delivered purchase and moderation for reviews',()=>{expect(sql).toContain("o.status = 'delivered'");expect(sql).toContain('is_approved = false')});it('locks products and coupons during checkout',()=>{expect(sql).toContain('is_published = true for update');expect(sql).toContain('expires_at > now()) for update')})});
