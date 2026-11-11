@@ -1,0 +1,9 @@
+'use client';
+import Link from 'next/link';
+import {Heart,ShoppingBag} from 'lucide-react';
+import type {LocalProduct} from '@/lib/local/store';
+import {toggleFavorite,setQuantity} from '@/lib/local/store';
+import {useLocal} from '@/lib/local/use-local';
+import {formatPrice} from '@/lib/utils/format';
+import {useState} from 'react';
+export function ProductCard({product:p}:{product:LocalProduct}){const {state}=useLocal();const [error,setError]=useState('');function run(fn:()=>void){try{fn();setError('')}catch{setError('Brauzer xotirasida saqlab bo‘lmadi.')}}return <article className="min-w-0"><div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#f5f4f7]"><Link href={'/product/'+p.id}>{p.image?<img src={p.image} alt={p.name} className="h-full w-full object-cover"/>:<div className="flex h-full items-center justify-center text-gray-300"><ShoppingBag size={48}/></div>}</Link><button onClick={()=>run(()=>toggleFavorite(p.id))} aria-label={state.favorites.includes(p.id)?'Saralangandan chiqarish':'Saralash'} className="absolute right-2 top-2 rounded-full bg-white p-2"><Heart size={18} className={state.favorites.includes(p.id)?'fill-brand-600 text-brand-600':'text-gray-500'}/></button></div><Link href={'/product/'+p.id} className="mt-3 block line-clamp-2 min-h-10 text-sm text-gray-700">{p.name}</Link><p className="text-xs text-gray-500">{p.category||'Turkumsiz'}</p><p className="mt-3 font-bold">{formatPrice(p.price)}</p><button className="mt-3 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm text-brand-700 disabled:opacity-50" disabled={!p.stock||(state.cart[p.id]||0)>=Math.min(100,p.stock)} onClick={()=>run(()=>setQuantity(p.id,(state.cart[p.id]||0)+1))}>{!p.stock?'Mavjud emas':(state.cart[p.id]||0)>=Math.min(100,p.stock)?'Savatda maksimum':'Savatga qo‘shish'}</button>{error&&<p role="alert" className="text-xs text-red-700">{error}</p>}</article>}

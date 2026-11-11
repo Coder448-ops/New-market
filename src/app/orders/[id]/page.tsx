@@ -1,6 +1,2 @@
-import {notFound,redirect} from 'next/navigation';
-import {getCurrentUser} from '@/lib/auth/session';
-import {getOrderWithItems} from '@/lib/database/orders';
-import {formatPrice} from '@/lib/utils/format';
-import {ORDER_STATUS_LABELS, type OrderStatus} from '@/types';
-export default async function Page({params}:{params:Promise<{id:string}>}){const u=await getCurrentUser();if(!u)redirect('/login');const result=await getOrderWithItems((await params).id,u.id);if(!result)notFound();const {order,items}=result;return <div className="wrap py-12"><h1 className="text-3xl font-bold">Buyurtma {order.order_number}</h1><p className="mt-3 text-brand-700">{ORDER_STATUS_LABELS[order.status as OrderStatus]}</p><div className="mt-8 max-w-2xl rounded-2xl border p-6">{items.map(i=><div key={i.id} className="flex justify-between gap-4 border-b py-4"><span>{i.product_name} × {i.quantity}</span><b>{formatPrice(i.line_total)}</b></div>)}<div className="mt-4 flex justify-between"><span>Chegirma</span><span>−{formatPrice(order.discount_total)}</span></div><div className="mt-4 flex justify-between"><span>Yetkazib berish</span><span>{formatPrice(order.delivery_fee)}</span></div><div className="mt-4 flex justify-between text-lg font-bold"><span>Jami</span><span>{formatPrice(order.total)}</span></div></div></div>}
+import {Unavailable} from '@/components/local/unavailable';
+export default function Page(){return <Unavailable title="Buyurtma tafsilotlari"/>}

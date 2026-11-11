@@ -1,11 +1,7 @@
-# NEX MARKET — implementation status
+# NEX MARKET — browser-only mode
 
-**Incomplete and not production-ready.**
+This version deliberately has no database or server-side persistent storage. Products and photos are created by the user, stored only in the current browser, and are never a shared marketplace catalogue. Cart and favorites are also browser-local. A JSON backup can be exported and restored. The application does not create real orders, accept payments, authenticate users, enforce server-side prices, or provide a real admin panel. It must not be represented as a production store.
 
-The previous managed backend was replaced with standard PostgreSQL (`pg`) and self-hosted database sessions; no Supabase SDK, Auth, Storage or hosted database is used by the application. The schema includes users, hashed sessions and email tokens alongside marketplace tables. PostgreSQL is accessed only on the server, and authorization is checked in application code. This schema does not enable RLS and must not be exposed directly to clients.
+The previous database-backed implementation is preserved in Git history but is not used by this version. Browser storage can be cleared or unavailable, is not confidential from other users of the same device, has quota limits and does not synchronize between devices. The deployment does not require a database or secret keys. Test status and incomplete browser/security checks are in the final task response and `DEVELOPMENT_CHECKLIST.md`.
 
-Implemented code includes database-backed catalog, basic authentication with SMTP email confirmation and password reset, local cart, COD checkout function, favorites, orders, and a limited admin panel. Payments and media uploads remain unimplemented. Database and SMTP are unconfigured in a fresh deployment. There is no migration of existing customer data from the previous backend.
-
-Verification in this environment: `npm run typecheck`, `npm run lint` (four image warnings), `npm test` (8 tests including PGlite migration/seed and three checkout checks). Real hosted PostgreSQL, SMTP, auth E2E, distributed rate limiting, browser behavior and concurrent checkout have not been verified. `npm run build` also passed with no database configured. Run a fresh production build after configuration. Review `npm audit` results before production.
-
-Outstanding work and limitations are tracked in `DEVELOPMENT_CHECKLIST.md`.
+Verification: `npm run typecheck` passed, `npm run lint` passed with three image warnings, `npm test` passed 5 tests (local storage logic and product form), and `npm run build` passed. Full real-browser E2E and multi-tab testing were not performed.

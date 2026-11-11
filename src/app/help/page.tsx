@@ -1,2 +1,2 @@
-export const metadata={title:'Savol va javoblar'};
-export default function Page(){return <div className="wrap py-14"><h1 className="text-3xl font-bold">Savol va javoblar</h1><p className="mt-6 max-w-3xl leading-7 text-gray-600">Buyurtmalaringiz holatini shaxsiy hisobingizdagi Buyurtmalar bo‘limida kuzatishingiz mumkin.</p></div>}
+export const metadata={title:'Qanday ishlaydi?'};
+export default function Page(){return <div className="wrap py-14"><h1 className="text-3xl font-bold">Qanday ishlaydi?</h1><p className="mt-6 max-w-3xl leading-7 text-gray-600">Mahsulot qo‘shish bo‘limida o‘z mahsulotingizni kiriting. U faqat ushbu brauzerda saqlanadi. Savat xarid ro‘yxati bo‘lib, hech kimga buyurtma yubormaydi. Brauzer ma’lumotlari o‘chirilib ketishi mumkin; boshqaruv sahifasida zaxira nusxani yuklab oling.</p></div>}

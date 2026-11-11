@@ -1,2 +1,2 @@
-export const metadata={title:'Maxfiylik siyosati'};
-export default function Page(){return <div className="wrap py-14"><h1 className="text-3xl font-bold">Maxfiylik siyosati</h1><p className="mt-6 max-w-3xl leading-7 text-gray-600">Hisobingiz va buyurtmalaringizga oid ma’lumotlar xizmat ko‘rsatish uchun ishlatiladi. Ishga tushirishdan oldin savdogar ushbu siyosatni qonunchilikka muvofiq to‘ldirishi kerak.</p></div>}
+export const metadata={title:'Ma’lumotlar haqida'};
+export default function Page(){return <div className="wrap py-14"><h1 className="text-3xl font-bold">Ma’lumotlar haqida</h1><p className="mt-6 max-w-3xl leading-7 text-gray-600">Mahsulotlar, rasmlar, savat va saralanganlar ushbu brauzerning localStorage xotirasida saqlanadi. Ushbu ilova ularni serverdagi bazaga yubormaydi. Qurilmadan foydalana oladigan boshqa shaxslar ularga kira olishi mumkin; maxfiy ma’lumotlarni kiritmang. Brauzer xotirasini tozalash ma’lumotlarni o‘chirishi mumkin.</p></div>}

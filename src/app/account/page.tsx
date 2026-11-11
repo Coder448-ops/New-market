@@ -1,7 +1,2 @@
-import Link from 'next/link';
-import {redirect} from 'next/navigation';
-import {db,isDatabaseConfigured} from '@/lib/db';
-import {getCurrentUser} from '@/lib/auth/session';
-import {logout,updateProfile} from '@/app/actions';
-export const dynamic='force-dynamic';
-export default async function Page(){if(!isDatabaseConfigured())return <div className="wrap py-20">Hisob tizimi sozlanmagan.</div>;const user=await getCurrentUser();if(!user)redirect('/login');const p=(await db().query('select * from profiles where id=$1',[user.id])).rows[0];return <div className="wrap py-12"><h1 className="text-3xl font-bold">Mening hisobim</h1><div className="mt-8 grid gap-8 md:grid-cols-[220px_1fr]"><nav className="grid h-fit gap-3 rounded-2xl bg-gray-50 p-5 text-sm"><Link href="/orders">Buyurtmalarim</Link><Link href="/favorites">Saralanganlar</Link><form action={logout}><button className="text-red-600">Chiqish</button></form></nav><form action={updateProfile} className="grid max-w-xl gap-4 rounded-2xl border p-6"><h2 className="text-xl font-bold">Shaxsiy ma’lumotlar</h2><p className="text-sm text-gray-500">{user.email}</p><label className="text-sm">Ism<input name="first_name" className="field mt-1" defaultValue={p?.first_name}/></label><label className="text-sm">Familiya<input name="last_name" className="field mt-1" defaultValue={p?.last_name}/></label><label className="text-sm">Telefon<input name="phone" className="field mt-1" defaultValue={p?.phone||''}/></label><button className="primary">Saqlash</button></form></div></div>}
+import {Unavailable} from '@/components/local/unavailable';
+export default function Page(){return <Unavailable title="Hisob"/>}

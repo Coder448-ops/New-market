@@ -1,14 +1,11 @@
-# NEX MARKET — development checklist
+# NEX MARKET — holat
 
-Holat: tugallanmagan; real savdo uchun tayyor emas.
+- [x] Foydalanuvchi tanlovi: bazasiz, faqat brauzerda saqlash.
+- [x] Mahalliy mahsulotlarni yaratish, tahrirlash, o‘chirish; saralanganlar va savat.
+- [x] Ma’lumotlarning faqat ushbu brauzerga tegishliligini ko‘rsatish; haqiqiy checkout va loginni o‘chirish.
+- [x] Zaxira faylini saqlash va tasdiq bilan qayta tiklash.
+- [ ] Keng qamrovli browser/E2E, bir nechta tab va turli qurilmalardagi testlar.
+- [ ] Rasm optimizatsiyasi, accessibility va responsive audit.
+- [ ] `npm audit` natijalarini ko‘rib chiqish.
 
-- [x] Supabase dependency va client kodlarini olib tashlash; mustaqil PostgreSQL, hashed session va SMTP asosini yaratish.
-- [x] PGlite bilan yangi migratsiya, seed, narx, qoldiq va idempotency asosiy holatlarini tekshirish.
-- [ ] Tashqi PostgreSQL, TLS, migratsiya, parallel checkout va barcha ruxsatlarni tekshirish.
-- [ ] SMTP bilan registration, tasdiqlash, kirish, chiqish, parol tiklashni E2E sinash; auth xavfsizlik auditi va umumiy rate limiter.
-- [ ] To‘liq admin CRUD, variantlar, order bekor qilish/restock, hisobot, filtr, sozlamalar va bannerlar.
-- [ ] Doimiy obyekt storage va xavfsiz upload/o‘chirish, real product rasmlari.
-- [ ] Savat sinxronlash, manzillar, batafsil gallery/specifications va qidiruv/turkumlar.
-- [ ] Payme va Click protokollari, imzo tekshiruvi, reconciliation va sandbox testlar.
-- [ ] Legal/contact mazmuni, SEO, accessibility, responsive va E2E testlar.
-- [ ] Dependency audit kamchiliklarini tuzatish; faqat keyin ishlab chiqarishga tayyorlikni baholash.
+Bu haqiqiy marketplace emas: umumiy katalog, serverdagi ishonchli narx, hisoblar, administrator, buyurtmalar va to‘lovlar mavjud emas. Foydalanuvchi tanlagan arxitektura bu cheklovni keltirib chiqaradi.

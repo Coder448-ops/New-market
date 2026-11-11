@@ -1,7 +1,5 @@
-import {redirect} from 'next/navigation';
-import {db,isDatabaseConfigured} from '@/lib/db';
-import {getCurrentUser} from '@/lib/auth/session';
-import {ProductCard} from '@/components/products/product-card';
-import type {ProductWithRelations} from '@/types';
-export const dynamic='force-dynamic';
-export default async function Page(){if(!isDatabaseConfigured())return <div className="wrap py-20">Tizim sozlanmagan.</div>;const user=await getCurrentUser();if(!user)redirect('/login');const {rows}=await db().query('select p.* from products p join favorites f on f.product_id=p.id where f.user_id=$1 and p.is_published order by f.created_at desc',[user.id]);return <div className="wrap py-12"><h1 className="text-3xl font-bold">Saralanganlar</h1>{rows.length?<div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">{(rows as ProductWithRelations[]).map(p=><ProductCard key={p.id} product={p}/>)}</div>:<p className="mt-8 text-gray-500">Saralangan mahsulotlar yo‘q.</p>}</div>}
+'use client';
+import Link from 'next/link';
+import {useLocal} from '@/lib/local/use-local';
+import {ProductCard} from '@/components/local/product-card';
+export default function Page(){const {state,error}=useLocal();const products=state.products.filter(p=>state.favorites.includes(p.id));return <div className="wrap py-12"><h1 className="text-3xl font-bold">Saralanganlar</h1><p className="mt-2 text-sm text-gray-500">Faqat ushbu brauzerda saqlanadi.</p>{error&&<p role="alert" className="mt-4 text-red-700">{error}</p>}{products.length?<div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">{products.map(p=><ProductCard key={p.id} product={p}/>)}</div>:<p className="mt-8 text-gray-500">Saralangan mahsulotlar yo‘q. <Link href="/catalog" className="text-brand-700">Katalogga o‘tish</Link></p>}</div>}
