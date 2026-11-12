@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export function Unavailable({title}:{title:string}){return <div className="wrap py-20"><h1 className="text-3xl font-bold">{title}</h1><p className="mt-4 max-w-2xl leading-7 text-gray-600">Brauzerda saqlash rejimida bu funksiya mavjud emas. Hisoblar, haqiqiy buyurtmalar, to‘lovlar va boshqalarga ko‘rinadigan admin paneli uchun serverda doimiy va himoyalangan saqlash kerak.</p><Link href="/catalog" className="primary mt-6">Katalogga o‘tish</Link></div>}
