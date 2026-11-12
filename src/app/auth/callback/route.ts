@@ -1,4 +1,13 @@
 import {NextResponse,type NextRequest} from 'next/server';
 import {db,isDatabaseConfigured} from '@/lib/db';
 import {hashToken} from '@/lib/auth/session';
-export async function GET(request:NextRequest){const url=new URL(request.url),token=url.searchParams.get('token'),purpose=url.searchParams.get('purpose');if(!isDatabaseConfigured()||!token||token.length>128||!['verify','reset'].includes(purpose||''))return NextResponse.redirect(new URL('/login?error=auth',url));if(purpose==='reset'){const {rows}=await db().query("select 1 from auth_tokens where token_hash=$1 and purpose='reset' and expires_at>now()",[hashToken(token)]);if(!rows.length)return NextResponse.redirect(new URL('/login?error=auth',url));const res=NextResponse.redirect(new URL('/reset-password',url));res.cookies.set('nex_reset',token,{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:3600});return res}const client=await db().connect();try{await client.query('begin');const result=await client.query("delete from auth_tokens where token_hash=$1 and purpose='verify' and expires_at>now() returning user_id",[hashToken(token)]);if(!result.rows[0]){await client.query('rollback');return NextResponse.redirect(new URL('/login?error=auth',url))}await client.query('update users set email_verified_at=now() where id=$1',[result.rows[0].user_id]);await client.query('commit');return NextResponse.redirect(new URL('/login',url))}catch{await client.query('rollback');return NextResponse.redirect(new URL('/login?error=auth',url))}finally{client.release()}}
+export async function GET(request:NextRequest){
+ const url=new URL(request.url),token=url.searchParams.get('token'),purpose=url.searchParams.get('purpose');
+ if(!isDatabaseConfigured()||!token||token.length>128||!['verify','reset'].includes(purpose||''))return NextResponse.redirect(new URL('/login?error=auth',url));
+ const {rows}=await db().query('select 1 from auth_tokens where token_hash=$1 and purpose=$2 and expires_at>now()',[hashToken(token),purpose]);
+ if(!rows.length)return NextResponse.redirect(new URL('/login?error=auth',url));
+ // Never consume verification links on GET: email security scanners often visit links.
+ const res=NextResponse.redirect(new URL(purpose==='reset'?'/reset-password':'/verify-email?confirm=1',url));
+ res.headers.set('Referrer-Policy','no-referrer');res.headers.set('Cache-Control','no-store');
+ res.cookies.set(purpose==='reset'?'nex_reset':'nex_verify',token,{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:3600});return res;
+}
