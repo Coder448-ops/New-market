@@ -1,2 +1,2 @@
-import {Catalog} from '@/components/demo/storefront';
-export default async function Page({searchParams}:{searchParams:Promise<{category?:string;brand?:string}>}){const p=await searchParams;return <Catalog initialCategory={p.category||''} initialBrand={p.brand||''}/>}
+import {CatalogView} from '@/components/products/catalog-view';
+export default async function Page({searchParams}:{searchParams:Promise<Record<string,string|undefined>>}){return <CatalogView params={await searchParams}/>}

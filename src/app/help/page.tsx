@@ -1,2 +1,2 @@
-export const metadata={title:'Qanday ishlaydi?'};
-export default function Page(){return <div className="wrap py-14"><h1 className="text-3xl font-bold">Qanday ishlaydi?</h1><p className="mt-6 max-w-3xl leading-7 text-gray-600">Demo katalog, savat, hisob va admin oynalarini sinab ko‘ring: hech qanday haqiqiy buyurtma yoki to‘lov yuborilmaydi. Ma’lumotlar faqat ushbu brauzerda saqlanadi. Avvalgi shaxsiy katalog va uning zaxira funksiyasi /manage sahifasida saqlangan.</p></div>}
+export const metadata={title:'Savol va javoblar'};
+export default function Page(){return <div className="wrap py-14"><h1 className="text-3xl font-bold">Savol va javoblar</h1><p className="mt-6 max-w-3xl leading-7 text-gray-600">Buyurtmalaringiz holatini shaxsiy hisobingizdagi Buyurtmalar bo‘limida kuzatishingiz mumkin.</p></div>}

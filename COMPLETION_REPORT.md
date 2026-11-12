@@ -1,5 +1,5 @@
-# Demo kengaytmasi holati
+# Loyiha holati
 
-Loyiha demo ma’lumotlar qatlamiga, katalog/qidiruv, kartalar/tez ko‘rish, taqqoslash, saralanganlar, demo savat, kupon, to‘rt bosqichli demo checkout, demo hisob, buyurtma, brendlar, aksiyalar va demo admin funksiyalariga ega. Mavjud lokal katalog alohida `/manage` va `/local` manzillarida saqlangan. Tafsilotlar README va DEVELOPMENT_CHECKLIST fayllarida.
+Demo foydalanuvchi yo‘llari olib tashlanib, PostgreSQL va SMTP uchun avvalgi server arxitekturasi tiklandi. Hozir hech qanday onlayn ma’lumotlar bazasi yoki SMTP ulangani tasdiqlanmagan; haqiqiy login, admin va buyurtma funksiyalari xizmatlar sozlanmaguncha ishlamaydi. Payme va Click sozlanmagan. Ilova real savdoga tayyor emas.
 
-Haqiqiy baza, autentifikatsiya, avtorizatsiya, buyurtma va to‘lov yo‘q. Demo admin himoyalanmagan; demo sharhlar tasdiqlanmagan va moderatsiyasiz. Hech qanday real ma’lumot kiritmang. Barcha prompt bandlari va real brauzer E2E hali yakunlangan deb hisoblanmaydi.
+Avvalgi mahalliy katalog alohida yo‘llarda saqlangan. Real marketplace xususiyatlari, integratsiyalar va testlarning qolgan ro‘yxati DEVELOPMENT_CHECKLIST.md da.
