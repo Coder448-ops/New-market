@@ -5,13 +5,12 @@ import {PGlite} from '@electric-sql/pglite';
 import {pg_trgm} from '@electric-sql/pglite/contrib/pg_trgm';
 import {pgcrypto} from '@electric-sql/pglite/contrib/pgcrypto';
 vi.mock('server-only',()=>({}));
-const state=vi.hoisted(()=>({pg:null as unknown as PGlite,mail:[] as {token:string;purpose:string}[],cookies:new Map<string,string>(),mailConfigured:true,mailFails:false,smsConfigured:true,smsFails:false,smsApproved:true,smsSent:0}));
+const state=vi.hoisted(()=>({pg:null as unknown as PGlite,mail:[] as {token:string;purpose:string}[],cookies:new Map<string,string>(),mailConfigured:true,mailFails:false}));
 vi.mock('@/lib/db',()=>({isDatabaseConfigured:()=>true,db:()=>({query:(sql:string,params?:unknown[])=>state.pg.query(sql,params),connect:async()=>({query:(sql:string,params?:unknown[])=>state.pg.query(sql,params),release:()=>{}})})}));
 vi.mock('@/lib/mail',()=>({isMailConfigured:()=>state.mailConfigured,sendAuthMail:async(_email:string,token:string,purpose:string)=>{state.mail.push({token,purpose})},sendTwoFactorCode:async(_email:string,token:string,purpose:string)=>{if(state.mailFails)throw Error('SMTP unavailable');state.mail.push({token,purpose:'2fa-'+purpose})}}));
-vi.mock('@/lib/sms',()=>({isSmsConfigured:()=>state.smsConfigured,startSmsVerification:async()=>{if(state.smsFails)throw Error('SMS unavailable');state.smsSent++;return 'VE'+'a'.repeat(32)},checkSmsVerification:async()=>state.smsApproved}));
 vi.mock('next/headers',()=>({cookies:async()=>({get:(key:string)=>state.cookies.has(key)?{value:state.cookies.get(key)}:undefined,set:(key:string,val:string)=>state.cookies.set(key,val),delete:(key:string)=>state.cookies.delete(key)})}));
 vi.mock('next/navigation',()=>({redirect:(url:string)=>{throw new Error('REDIRECT '+url)}}));
-import {login,legacyLogin,register,verifyPhone,startPhoneAttach,confirmEmail,resetPassword,updatePassword,logout,startTwoFactorSettings,verifyTwoFactor} from '@/app/actions';
+import {login,legacyLogin,register,startPhoneAttach,confirmEmail,resetPassword,updatePassword,logout,startTwoFactorSettings,verifyTwoFactor} from '@/app/actions';
 import {hashPassword,hashToken} from '@/lib/auth/session';
 import {checkAuthRateLimit} from '@/lib/auth/rate-limit';
 import {GET} from '@/app/auth/callback/route';
@@ -19,39 +18,35 @@ import {NextRequest} from 'next/server';
 const form=(data:Record<string,string>)=>{const f=new FormData();for(const [k,v] of Object.entries(data))f.set(k,v);return f};
 const registration=(password='new-password',phone='901234567')=>form({phone,firstName:'Test',lastName:'Buyer',password});
 const phoneLogin=()=>form({phone:'901234567',password:'new-password'});
-async function registerAndVerify(){await expect(register(registration())).rejects.toThrow('REDIRECT /verify-phone');await expect(verifyPhone(form({code:'123456'}))).rejects.toThrow('REDIRECT /login?phone_verified=1')}
+async function registerUser(){await expect(register(registration())).rejects.toThrow('REDIRECT /login?registered=1')}
 beforeAll(async()=>{state.pg=new PGlite({extensions:{pg_trgm,pgcrypto}});for(const migration of ['001_init.sql','002_auth_rate_limit.sql','003_optional_email_2fa.sql','004_phone_login.sql'])await state.pg.exec(readFileSync('database/migrations/'+migration,'utf8'));},30000);
 afterAll(async()=>{await state.pg.close()});
-beforeEach(async()=>{state.mail=[];state.mailConfigured=true;state.mailFails=false;state.smsConfigured=true;state.smsFails=false;state.smsApproved=true;state.smsSent=0;state.cookies.clear();await state.pg.exec('truncate users cascade; truncate phone_verifications; truncate auth_rate_limits')});
+beforeEach(async()=>{state.mail=[];state.mailConfigured=true;state.mailFails=false;state.cookies.clear();await state.pg.exec('truncate users cascade; truncate phone_verifications; truncate auth_rate_limits')});
 
 describe('phone and optional email authentication',()=>{
- it('registers only after SMS verification, uses phone and password, and does not send another SMS at login',async()=>{
-  await expect(register(registration())).rejects.toThrow('REDIRECT /verify-phone');
-  expect(state.smsSent).toBe(1);expect((await state.pg.query('select 1 from users')).rows).toHaveLength(0);expect(state.mail).toHaveLength(0);
-  state.smsApproved=false;await expect(verifyPhone(form({code:'123456'}))).rejects.toThrow('REDIRECT /verify-phone?error=1');expect((await state.pg.query('select 1 from users')).rows).toHaveLength(0);
-  state.smsApproved=true;await expect(verifyPhone(form({code:'123456'}))).rejects.toThrow('REDIRECT /login?phone_verified=1');
-  const u=(await state.pg.query<{phone_e164:string;email:string|null;email_2fa_enabled:boolean}>('select phone_e164,email,email_2fa_enabled from users')).rows[0];
-  expect(u).toEqual({phone_e164:'+998901234567',email:null,email_2fa_enabled:false});
+ it('registers without SMS or email and logs in with phone and password',async()=>{
+  await registerUser();
+  const u=(await state.pg.query<{phone_e164:string;phone_verified_at:Date|null;email:string|null;email_2fa_enabled:boolean}>('select phone_e164,phone_verified_at,email,email_2fa_enabled from users')).rows[0];
+  expect(u).toEqual({phone_e164:'+998901234567',phone_verified_at:null,email:null,email_2fa_enabled:false});
+  expect(state.mail).toHaveLength(0);
   await expect(login(form({phone:'901234567',password:'bad-password'}))).rejects.toThrow('REDIRECT /login?error=auth');
-  await expect(login(phoneLogin())).rejects.toThrow('REDIRECT /account');expect(state.cookies.get('nex_session')).toBeTruthy();expect(state.smsSent).toBe(1);expect(state.mail).toHaveLength(0);
+  await expect(login(phoneLogin())).rejects.toThrow('REDIRECT /account');expect(state.cookies.get('nex_session')).toBeTruthy();expect(state.mail).toHaveLength(0);
   await expect(logout()).rejects.toThrow('REDIRECT /');
  },30000);
- it('fails closed on absent SMS configuration, expired code, too many checks and duplicate phone',async()=>{
-  state.smsConfigured=false;await expect(register(registration())).rejects.toThrow('REDIRECT /register?error=unconfigured');expect(state.smsSent).toBe(0);
-  state.smsConfigured=true;state.smsFails=true;await expect(register(registration())).rejects.toThrow('REDIRECT /register?error=sms');expect((await state.pg.query('select 1 from users')).rows).toHaveLength(0);
-  state.smsFails=false;await expect(register(registration())).rejects.toThrow('REDIRECT /verify-phone');state.smsApproved=false;
-  for(let i=0;i<5;i++)await expect(verifyPhone(form({code:'123456'}))).rejects.toThrow('REDIRECT /verify-phone?error=1');
-  state.smsApproved=true;await expect(verifyPhone(form({code:'123456'}))).rejects.toThrow('REDIRECT /verify-phone?error=1');
-  await state.pg.exec("update auth_rate_limits set expires_at=now()-interval '1 second'");
-  await expect(register(registration())).rejects.toThrow('REDIRECT /verify-phone');await state.pg.exec("update phone_verifications set expires_at=now()-interval '1 second'");
-  await expect(verifyPhone(form({code:'123456'}))).rejects.toThrow('REDIRECT /verify-phone?error=1');
-  await registerAndVerify();
-  await state.pg.exec("update auth_rate_limits set expires_at=now()-interval '1 second'");
-  await expect(register(registration('attack-password'))).rejects.toThrow('REDIRECT /verify-phone');await expect(verifyPhone(form({code:'123456'}))).rejects.toThrow('REDIRECT /login?phone_verified=1');
-  expect((await state.pg.query('select 1 from users')).rows).toHaveLength(1);await expect(login(phoneLogin())).rejects.toThrow('REDIRECT /account');
+ it('does not overwrite an existing account on duplicate registration',async()=>{
+  await registerUser();
+  await expect(register(registration('attack-password'))).rejects.toThrow('REDIRECT /register?error=duplicate');
+  expect((await state.pg.query('select 1 from users')).rows).toHaveLength(1);
+  await expect(login(form({phone:'901234567',password:'attack-password'}))).rejects.toThrow('REDIRECT /login?error=auth');
+  await expect(login(phoneLogin())).rejects.toThrow('REDIRECT /account');
+ },30000);
+ it('keeps existing verified phone accounts working',async()=>{
+  const hash=await hashPassword('new-password');
+  await state.pg.query("insert into users(phone_e164,phone_verified_at,password_hash) values('+998901234567',now(),$1)",[hash]);
+  await expect(login(phoneLogin())).rejects.toThrow('REDIRECT /account');
  },30000);
  it('asks for email only to enable two-factor and requires code only after enabling',async()=>{
-  await registerAndVerify();await expect(login(phoneLogin())).rejects.toThrow('REDIRECT /account');
+  await registerUser();await expect(login(phoneLogin())).rejects.toThrow('REDIRECT /account');
   await expect(startTwoFactorSettings(form({purpose:'enable',password:'new-password'}))).rejects.toThrow('REDIRECT /account?security=invalid');
   await expect(startTwoFactorSettings(form({purpose:'enable',password:'new-password',email:'buyer@example.test'}))).rejects.toThrow('REDIRECT /two-factor?settings=1');
   const enableCode=state.mail.at(-1)!.token;
@@ -64,14 +59,14 @@ describe('phone and optional email authentication',()=>{
   await expect(verifyTwoFactor(form({code}))).rejects.toThrow('REDIRECT /account');state.cookies.set('nex_2fa_login',token);await expect(verifyTwoFactor(form({code}))).rejects.toThrow('REDIRECT /two-factor?error=1');
   await expect(startTwoFactorSettings(form({purpose:'disable',password:'new-password'}))).rejects.toThrow('REDIRECT /two-factor?settings=1');
   await expect(verifyTwoFactor(form({settings:'1',code:state.mail.at(-1)!.token}))).rejects.toThrow('REDIRECT /account?security=disabled');
-  await expect(logout()).rejects.toThrow('REDIRECT /');const mailCount=state.mail.length;await expect(login(phoneLogin())).rejects.toThrow('REDIRECT /account');expect(state.mail).toHaveLength(mailCount);expect(state.smsSent).toBe(1);
+  await expect(logout()).rejects.toThrow('REDIRECT /');const mailCount=state.mail.length;await expect(login(phoneLogin())).rejects.toThrow('REDIRECT /account');expect(state.mail).toHaveLength(mailCount);
  },30000);
- it('keeps legacy email accounts accessible until their owner attaches a verified phone',async()=>{
+ it('keeps legacy email accounts accessible and attaches an unverified phone',async()=>{
   const hash=await hashPassword('legacy-password');const u=await state.pg.query<{id:string}>("insert into users(email,email_verified_at,password_hash) values('old@example.test',now(),$1) returning id",[hash]);
   await state.pg.query('insert into profiles(id,first_name,last_name) values($1,$2,$3)',[u.rows[0].id,'Old','User']);
   await expect(legacyLogin(form({email:'old@example.test',password:'legacy-password'}))).rejects.toThrow('REDIRECT /account');
-  await expect(startPhoneAttach(form({phone:'901234567',password:'legacy-password'}))).rejects.toThrow('REDIRECT /verify-phone');
-  await expect(verifyPhone(form({code:'123456'}))).rejects.toThrow('REDIRECT /account?phone=verified');
+  await expect(startPhoneAttach(form({phone:'901234567',password:'wrong-password'}))).rejects.toThrow('REDIRECT /account?phone=invalid');
+  await expect(startPhoneAttach(form({phone:'901234567',password:'legacy-password'}))).rejects.toThrow('REDIRECT /account?phone=attached');
   const account=(await state.pg.query<{phone_e164:string}>('select phone_e164 from users')).rows[0];expect(account.phone_e164).toBe('+998901234567');
   await expect(logout()).rejects.toThrow('REDIRECT /');await expect(legacyLogin(form({email:'old@example.test',password:'legacy-password'}))).rejects.toThrow('REDIRECT /legacy-login?error=auth');
   await expect(login(form({phone:'901234567',password:'legacy-password'}))).rejects.toThrow('REDIRECT /account');

@@ -9,8 +9,6 @@ import {isMailConfigured,sendAuthMail,sendTwoFactorCode} from '@/lib/mail';
 import {loginSchema,registerSchema,loginPhoneSchema} from '@/lib/validation/schemas';
 import {checkAuthRateLimit} from '@/lib/auth/rate-limit';
 import {z} from 'zod';
-import {isSmsConfigured,startSmsVerification,checkSmsVerification} from '@/lib/sms';
-import {phoneCookieOptions} from '@/lib/auth/phone';
 
 const dummyHash='9d5018dbe45ed13d18d01a76aefb2937:2ba5b84bcbd2b6a4f4a139d95bd77f96da88aaaf819d2277dec333febe4c4d83e08d008df1118ced9db82b790d1f8f62efd6f55c395b8f53f261fee5bf4a2996';
 async function loginWithIdentifier(form:FormData,legacy:boolean){
@@ -21,14 +19,14 @@ async function loginWithIdentifier(form:FormData,legacy:boolean){
  if(!await checkAuthRateLimit('login:'+identifier,10,60))redirect(legacy?'/legacy-login?error=auth':'/login?error=auth');
  const {rows}=await db().query(legacy?'select id,password_hash,email_verified_at,phone_verified_at,phone_e164,email from users where email=$1 and phone_e164 is null':'select id,password_hash,email_verified_at,phone_verified_at,phone_e164,email from users where phone_e164=$1',[identifier]);
  const user=rows[0];const valid=await verifyPassword(p.data.password,user?.password_hash||dummyHash);
- if(!user||!(legacy?user.email_verified_at:user.phone_verified_at)||!valid)redirect(legacy?'/legacy-login?error=auth':'/login?error=auth');
+ if(!user||!(legacy?user.email_verified_at:user.phone_e164)||!valid)redirect(legacy?'/legacy-login?error=auth':'/login?error=auth');
  const challenge=makeChallenge(),sessionToken=makeToken(),expires=new Date(Date.now()+14*24*60*60*1000);
  const client=await db().connect();let mode:'login'|'normal'|'invalid'|'unconfigured'|'limited'='invalid';let loginEmail:string|undefined;
  try{
   await client.query('begin');
   const locked=await client.query('select password_hash,email_verified_at,phone_verified_at,phone_e164,email_2fa_enabled,email from users where id=$1 for update',[user.id]);
   const current=locked.rows[0];
-  if(current && (legacy?(current.email_verified_at && !current.phone_e164):current.phone_verified_at) && current.password_hash===user.password_hash){
+  if(current && (legacy?(current.email_verified_at && !current.phone_e164):current.phone_e164===identifier) && current.password_hash===user.password_hash){
    if(current.email_2fa_enabled){
     if(!isMailConfigured()||!current.email||!current.email_verified_at)mode='unconfigured';
     else if(!await checkAuthRateLimit('2fa-login:'+user.id,5,3600))mode='limited';
@@ -55,61 +53,44 @@ async function loginWithIdentifier(form:FormData,legacy:boolean){
 export async function login(form:FormData){return loginWithIdentifier(form,false)}
 export async function legacyLogin(form:FormData){return loginWithIdentifier(form,true)}
 export async function register(form:FormData){
- if(!isDatabaseConfigured()||!isSmsConfigured())redirect('/register?error=unconfigured');
+ if(!isDatabaseConfigured())redirect('/register?error=unconfigured');
  const p=registerSchema.safeParse(Object.fromEntries(form));if(!p.success)redirect('/register?error=invalid');
  const {phone,firstName,lastName,password}=p.data;
- if(!await checkAuthRateLimit('sms-phone:'+phone,3,3600)||!await checkAuthRateLimit('sms-global',30,3600))redirect('/register?error=limit');
- const token=makeToken(),passwordHash=await hashPassword(password);let sid:string;
- try{sid=await startSmsVerification(phone)}catch{redirect('/register?error=sms')}
- await db().query("insert into phone_verifications(challenge_hash,phone_e164,purpose,password_hash,first_name,last_name,verification_sid,expires_at) values($1,$2,'register',$3,$4,$5,$6,now()+interval '10 minutes')",[hashToken(token),phone,passwordHash,firstName,lastName,sid]);
- (await cookies()).set('nex_phone_verify',token,phoneCookieOptions());redirect('/verify-phone');
+ if(!await checkAuthRateLimit('register-phone:'+phone,5,3600)||!await checkAuthRateLimit('register-global',1000,3600))redirect('/register?error=limit');
+ const passwordHash=await hashPassword(password);const client=await db().connect();let created=false;
+ try{
+  await client.query('begin');
+  const result=await client.query('insert into users(phone_e164,password_hash) values($1,$2) on conflict(phone_e164) do nothing returning id',[phone,passwordHash]);
+  if(result.rows[0]){
+   const id=result.rows[0].id;
+   await client.query('insert into profiles(id,first_name,last_name,phone) values($1,$2,$3,$4)',[id,firstName,lastName,phone]);
+   await client.query("insert into user_roles(user_id,role) values($1,'customer')",[id]);created=true;
+  }
+  await client.query('commit');
+ }catch{await client.query('rollback');redirect('/register?error=unavailable')}finally{client.release()}
+ if(!created)redirect('/register?error=duplicate');
+ redirect('/login?registered=1');
 }
 export async function startPhoneAttach(form:FormData){
  const user=await getCurrentUser();if(!user)redirect('/login');
  if(user.phone_e164)redirect('/account?phone=exists');
- if(!isSmsConfigured())redirect('/account?phone=unconfigured');
  const parsed=loginPhoneSchema.safeParse(String(form.get('phone')||''));const password=String(form.get('password')||'');
  if(!parsed.success||!password||password.length>256)redirect('/account?phone=invalid');
- if(!await checkAuthRateLimit('phone-attach:'+user.id,3,3600)||!await checkAuthRateLimit('sms-phone:'+parsed.data,3,3600)||!await checkAuthRateLimit('sms-global',30,3600))redirect('/account?phone=limit');
+ if(!await checkAuthRateLimit('phone-attach:'+user.id,5,3600))redirect('/account?phone=limit');
  const session=(await cookies()).get(cookieName)?.value;if(!session)redirect('/login');
  const {rows}=await db().query('select password_hash from users where id=$1',[user.id]);
  if(!rows[0]||!await verifyPassword(password,rows[0].password_hash))redirect('/account?phone=invalid');
- let sid:string;try{sid=await startSmsVerification(parsed.data)}catch{redirect('/account?phone=sms')}
- const token=makeToken();
- await db().query("insert into phone_verifications(challenge_hash,phone_e164,purpose,user_id,session_hash,verification_sid,expires_at) values($1,$2,'attach',$3,$4,$5,now()+interval '10 minutes')",[hashToken(token),parsed.data,user.id,hashToken(session),sid]);
- (await cookies()).set('nex_phone_verify',token,phoneCookieOptions());redirect('/verify-phone');
-}
-export async function verifyPhone(form:FormData){
- const store=await cookies();const token=store.get('nex_phone_verify')?.value;const code=String(form.get('code')||'');
- if(!token||token.length>128||!/^\d{4,10}$/.test(code)||!isSmsConfigured())redirect('/verify-phone?error=1');
- const result=await db().query("update phone_verifications set attempts=attempts+1 where challenge_hash=$1 and expires_at>now() and attempts<5 returning *",[hashToken(token)]);
- const challenge=result.rows[0];if(!challenge)redirect('/verify-phone?error=1');
- let approved=false;try{approved=await checkSmsVerification(challenge.verification_sid,challenge.phone_e164,code)}catch{redirect('/verify-phone?error=1')}
- if(!approved)redirect('/verify-phone?error=1');
- const session=store.get(cookieName)?.value;const client=await db().connect();let done=false;let purpose='';
+ const client=await db().connect();let done=false;
  try{
   await client.query('begin');
-  const consumed=await client.query('delete from phone_verifications where challenge_hash=$1 and expires_at>now() returning *',[hashToken(token)]);
-  const pending=consumed.rows[0];
-  if(pending){
-   purpose=pending.purpose;
-   if(pending.purpose==='register'){
-    const created=await client.query('insert into users(phone_e164,phone_verified_at,password_hash) values($1,now(),$2) on conflict(phone_e164) do nothing returning id',[pending.phone_e164,pending.password_hash]);
-    if(created.rows[0]){
-     const id=created.rows[0].id;
-     await client.query('insert into profiles(id,first_name,last_name,phone) values($1,$2,$3,$4)',[id,pending.first_name,pending.last_name,pending.phone_e164]);
-     await client.query("insert into user_roles(user_id,role) values($1,'customer')",[id]);
-    }
-    done=true;
-   }else if(pending.purpose==='attach'&&session&&hashToken(session)===pending.session_hash){
-    const active=await client.query('select 1 from sessions where token_hash=$1 and user_id=$2 and expires_at>now()',[pending.session_hash,pending.user_id]);
-    if(active.rows.length){const updated=await client.query('update users set phone_e164=$1,phone_verified_at=now() where id=$2 and phone_e164 is null returning id',[pending.phone_e164,pending.user_id]);if(updated.rows.length){await client.query('update profiles set phone=$1 where id=$2',[pending.phone_e164,pending.user_id]);done=true}}
-   }
+  const active=await client.query('select 1 from sessions where token_hash=$1 and user_id=$2 and expires_at>now()',[hashToken(session),user.id]);
+  if(active.rows.length){
+   const updated=await client.query('update users set phone_e164=$1 where id=$2 and phone_e164 is null and password_hash=$3 returning id',[parsed.data,user.id,rows[0].password_hash]);
+   if(updated.rows.length){await client.query('update profiles set phone=$1 where id=$2',[parsed.data,user.id]);done=true}
   }
   await client.query('commit');
  }catch{await client.query('rollback');done=false}finally{client.release()}
- store.delete('nex_phone_verify');if(!done)redirect('/verify-phone?error=1');
- if(purpose==='attach')redirect('/account?phone=verified');redirect('/login?phone_verified=1');
+ redirect(done?'/account?phone=attached':'/account?phone=invalid');
 }
 export async function logout(){await destroySession();redirect('/')}
 export async function resetPassword(form:FormData){
@@ -178,7 +159,7 @@ export async function verifyTwoFactor(form:FormData){
   await client.query('begin');
   const result=await client.query(`select c.user_id,c.purpose,c.code_hash,c.session_hash,c.pending_email,c.attempts,u.email_2fa_enabled
    from auth_2fa_challenges c join users u on u.id=c.user_id
-   where c.challenge_hash=$1 and c.expires_at>now() and c.attempts<5 and (u.phone_verified_at is not null or (u.phone_e164 is null and u.email_verified_at is not null))
+   where c.challenge_hash=$1 and c.expires_at>now() and c.attempts<5 and (u.phone_e164 is not null or u.email_verified_at is not null)
    for update of c,u`,[hashToken(token)]);
   const row=result.rows[0];
   if(row){
