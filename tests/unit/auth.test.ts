@@ -15,7 +15,7 @@ vi.mock('next/headers',()=>({cookies:async()=>({get:mocks.cookieGet,set:mocks.co
 vi.mock('@/lib/db',()=>({db:()=>({query:mocks.query}),isDatabaseConfigured:mocks.configured}));
 vi.mock('nodemailer',()=>({default:{createTransport:mocks.createTransport}}));
 import {createSession,destroySession,getCurrentUser,hashPassword,hashToken,makeToken,verifyPassword} from '@/lib/auth/session';
-import {sendAuthMail} from '@/lib/mail';
+import {sendAuthMail,sendTwoFactorCode} from '@/lib/mail';
 
 beforeEach(()=>{vi.clearAllMocks();mocks.configured.mockReturnValue(true);mocks.query.mockResolvedValue({rows:[]});mocks.createTransport.mockReturnValue({sendMail:mocks.sendMail});mocks.sendMail.mockResolvedValue({});});
 
@@ -43,6 +43,13 @@ describe('authentication primitives',()=>{
 });
 
 describe('verification email',()=>{
+  it('sends the email code without exposing it in the subject',async()=>{
+    vi.stubEnv('SMTP_HOST','smtp.example.invalid');vi.stubEnv('SMTP_USER','test');vi.stubEnv('SMTP_PASSWORD','test');vi.stubEnv('MAIL_FROM','test@example.invalid');vi.stubEnv('NEXT_PUBLIC_APP_URL','https://shop.example.invalid');
+    try{
+      await sendTwoFactorCode('buyer@example.invalid','012345','login');
+      const mail=mocks.sendMail.mock.calls[0][0];expect(mail.text).toContain('012345');expect(mail.text).toContain('10 daqiqa');expect(mail.subject).not.toContain('012345');
+    }finally{vi.unstubAllEnvs()}
+  });
   it('uses the configured https origin and creates a usable verification link',async()=>{
     vi.stubEnv('SMTP_HOST','smtp.example.invalid');vi.stubEnv('SMTP_PORT','587');vi.stubEnv('SMTP_USER','test');vi.stubEnv('SMTP_PASSWORD','test');vi.stubEnv('MAIL_FROM','test@example.invalid');vi.stubEnv('NEXT_PUBLIC_APP_URL','https://shop.example.invalid');
     try{

@@ -5,7 +5,7 @@ Next.js va PostgreSQL asosidagi marketplace. Foydalanuvchi ko‘rsatmasiga binoa
 ## Sozlash
 
 1. Node.js 20+ va PostgreSQL 15+ tayyorlang. Neon kabi mustaqil PostgreSQL provayderidan foydalanish mumkin; haqiqiy ulanish va migratsiya hali tekshirilmagan. Supabase ishlatilmaydi.
-2. Bazaga zaxira oling va kerakli Neon branch/database tanlanganini tekshiring. `database/migrations/001_init.sql` faqat bo‘sh `public` sxemaga bir marta qo‘llanadi; skript mavjud obyektlarni aniqlasa to‘xtaydi va tranzaksiyani qaytaradi. `pgcrypto` va `pg_trgm` kengaytmalari kerak. So‘ng aynan shu bazada `database/migrations/002_auth_rate_limit.sql` ni ham bir marta ishga tushiring; bu mavjud foydalanuvchi ma’lumotlarini o‘chirmaydi. Bu sxema eski brauzer ma’lumotlarini avtomatik ko‘chirmaydi.
+2. Bazaga zaxira oling va kerakli Neon branch/database tanlanganini tekshiring. `database/migrations/001_init.sql` faqat bo‘sh `public` sxemaga bir marta qo‘llanadi; skript mavjud obyektlarni aniqlasa to‘xtaydi va tranzaksiyani qaytaradi. `pgcrypto` va `pg_trgm` kengaytmalari kerak. So‘ng aynan shu bazada `database/migrations/002_auth_rate_limit.sql` ni ham bir marta ishga tushiring; bu mavjud foydalanuvchi ma’lumotlarini o‘chirmaydi. Keyin `database/migrations/003_optional_email_2fa.sql` ni bir marta ishga tushiring. Bu sxema eski brauzer ma’lumotlarini avtomatik ko‘chirmaydi.
 3. `.env.example` dan mahalliy maxfiy `.env.local` yarating. Serverga `DATABASE_URL`, tashqi HTTPS `NEXT_PUBLIC_APP_URL`, va ro‘yxatdan o‘tish/email tasdiqlash/parol tiklash uchun SMTP qiymatlarini kiriting. Maxfiy qiymatlarni Git yoki chatga joylamang. Production bazasi TLS bilan himoyalanishi kerak.
 4. `npm ci`, migratsiyadan keyin `npm run dev`. Vercel production environment variable'lari server-side sifatida belgilanadi; migratsiya build vaqtida avtomatik ishlamaydi.
 
@@ -13,7 +13,7 @@ Next.js va PostgreSQL asosidagi marketplace. Foydalanuvchi ko‘rsatmasiga binoa
 
 ## Hisob va administrator
 
-Sessiya va email tokenlari hash shaklida bazada saqlanadi. Ro‘yxatdan o‘tish uchun sozlangan SMTP talab qilinadi. Admin hududi server tarafida admin rolini tekshiradi. Ommaviy/default admin yo‘q. Birinchi administrator uchun emaili tasdiqlangan hisob yaratilgandan so‘ng vakolatli operator uning UUID sini bazada tekshirib, alohida xavfsiz SQL ulanishida shu hisobga `user_roles` jadvali orqali `admin` rolini tayinlashi kerak. UUID/credentiallarni chatga yubormang.
+Sessiya va email tokenlari hash shaklida bazada saqlanadi. Ikki bosqichli email himoyasi odatda o‘chiq; foydalanuvchi hisob sahifasida parol va email kodini tasdiqlab uni yoqishi yoki o‘chirishi mumkin. Yoqilganda har bir yangi kirishda 10 daqiqalik bir martalik kod so‘raladi; 5 ta xato urinishdan keyin kod ishlamaydi. Email himoyasi phishingga chidamli autentifikator yoki passkey o‘rnini bosmaydi. Emailga kirish yo‘qolsa mustaqil recovery mexanizmi hali mavjud emas. Ro‘yxatdan o‘tish uchun sozlangan SMTP talab qilinadi. Admin hududi server tarafida admin rolini tekshiradi. Ommaviy/default admin yo‘q. Birinchi administrator uchun emaili tasdiqlangan hisob yaratilgandan so‘ng vakolatli operator uning UUID sini bazada tekshirib, alohida xavfsiz SQL ulanishida shu hisobga `user_roles` jadvali orqali `admin` rolini tayinlashi kerak. UUID/credentiallarni chatga yubormang.
 
 Kodda real DB narxi va qoldig‘ini tekshiradigan naqd buyurtma tuzilmasi mavjud, lekin tashqi PostgreSQL, SMTP, parallel checkout va production auth E2E sinovlari hali bajarilmagan. Auth uchun email bo‘yicha PostgreSQL orqali instance-lararo limit bor. Bu IP bo‘yicha cheklov yoki to‘liq abuse himoyasi emas; production uchun qo‘shimcha tarmoq/WAF himoyasi va muddati tugagan `auth_rate_limits` yozuvlarini tozalash kerak. Onlayn to‘lovlar o‘chirilgan.
 
@@ -33,3 +33,7 @@ Auth uchun parol xeshi, sessiya, tasdiqlash xati unit testlari hamda PGlite orqa
 ## Vercel build: jadval topilmadi
 
 `relation "categories" does not exist` — ulanish vaqtida joriy baza/search_path da kerakli jadval topilmadi. Neon branchi va maqsadli bo‘sh bazani tekshirib migratsiyani bir marta ishga tushiring; ma’lumotli bazani o‘zgartirishdan oldin zaxira oling. Migratsiya build vaqtida ishga tushirilmaydi. Bosh sahifa va sitemap deployment build paytida bazani o‘qimaydi, lekin ishlash vaqtida katalog/auth uchun mos sxema va haqiqiy ulanish shart. SMTP ham alohida sozlanishi kerak.
+
+### Email 2FA
+
+SMTP barcha email manzillarga (jumladan Gmail) kod yuborish uchun kerak. Arena Gmail ulanishi veb-ilova uchun doimiy SMTP ulanishi emas. SMTP ishlamasa email 2FA o‘chirilmaydi va kod bilan kirish chetlab o‘tilmaydi. Auth holati PGlite va mock SMTP bilan tekshirilgan; real Neon, SMTP va brauzer orqali sinov shart. `auth_2fa_challenges` va `auth_rate_limits` muddati o‘tgan qatorlarini davriy tozalash kerak.

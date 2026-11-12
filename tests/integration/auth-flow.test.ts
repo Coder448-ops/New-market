@@ -6,12 +6,12 @@ import {pg_trgm} from '@electric-sql/pglite/contrib/pg_trgm';
 import {pgcrypto} from '@electric-sql/pglite/contrib/pgcrypto';
 
 vi.mock('server-only',()=>({}));
-const state=vi.hoisted(()=>({pg:null as unknown as PGlite,mail:[] as {token:string;purpose:string}[],cookies:new Map<string,string>()}));
+const state=vi.hoisted(()=>({pg:null as unknown as PGlite,mail:[] as {token:string;purpose:string}[],cookies:new Map<string,string>(),mailConfigured:true,mailFails:false}));
 vi.mock('@/lib/db',()=>({isDatabaseConfigured:()=>true,db:()=>({query:(sql:string,params?:unknown[])=>state.pg.query(sql,params),connect:async()=>({query:(sql:string,params?:unknown[])=>state.pg.query(sql,params),release:()=>{}})})}));
-vi.mock('@/lib/mail',()=>({isMailConfigured:()=>true,sendAuthMail:async(_email:string,token:string,purpose:string)=>{state.mail.push({token,purpose})}}));
+vi.mock('@/lib/mail',()=>({isMailConfigured:()=>state.mailConfigured,sendAuthMail:async(_email:string,token:string,purpose:string)=>{state.mail.push({token,purpose})},sendTwoFactorCode:async(_email:string,token:string,purpose:string)=>{if(state.mailFails)throw Error('SMTP unavailable');state.mail.push({token,purpose:'2fa-'+purpose})}}));
 vi.mock('next/headers',()=>({cookies:async()=>({get:(key:string)=>state.cookies.has(key)?{value:state.cookies.get(key)}:undefined,set:(key:string,val:string)=>state.cookies.set(key,val),delete:(key:string)=>state.cookies.delete(key)})}));
 vi.mock('next/navigation',()=>({redirect:(url:string)=>{throw new Error('REDIRECT '+url)}}));
-import {login,register,confirmEmail,resetPassword,updatePassword,logout} from '@/app/actions';
+import {login,register,confirmEmail,resetPassword,updatePassword,logout,startTwoFactorSettings,verifyTwoFactor} from '@/app/actions';
 import {hashToken} from '@/lib/auth/session';
 import {checkAuthRateLimit} from '@/lib/auth/rate-limit';
 import {GET} from '@/app/auth/callback/route';
@@ -19,9 +19,9 @@ import {NextRequest} from 'next/server';
 
 const form=(data:Record<string,string>)=>{const f=new FormData();for(const [k,v] of Object.entries(data))f.set(k,v);return f};
 const registration=(password:string)=>form({email:'buyer@example.test',firstName:'Test',lastName:'Buyer',password});
-beforeAll(async()=>{state.pg=new PGlite({extensions:{pg_trgm,pgcrypto}});await state.pg.exec(readFileSync('database/migrations/001_init.sql','utf8'));await state.pg.exec(readFileSync('database/migrations/002_auth_rate_limit.sql','utf8'));},30000);
+beforeAll(async()=>{state.pg=new PGlite({extensions:{pg_trgm,pgcrypto}});await state.pg.exec(readFileSync('database/migrations/001_init.sql','utf8'));await state.pg.exec(readFileSync('database/migrations/002_auth_rate_limit.sql','utf8'));await state.pg.exec(readFileSync('database/migrations/003_optional_email_2fa.sql','utf8'));},30000);
 afterAll(async()=>{await state.pg.close()});
-beforeEach(async()=>{state.mail=[];state.cookies.clear();await state.pg.exec('truncate users cascade; truncate auth_rate_limits')});
+beforeEach(async()=>{state.mail=[];state.mailConfigured=true;state.mailFails=false;state.cookies.clear();await state.pg.exec('truncate users cascade; truncate auth_rate_limits')});
 
 describe('database-backed authentication',()=>{
  it('registers, rejects old links after re-registration, verifies, logs in and resets all sessions and reset links',async()=>{
@@ -42,6 +42,63 @@ describe('database-backed authentication',()=>{
   expect((await state.pg.query('select 1 from auth_tokens where token_hash=$1',[hashToken(reset2)])).rows).toHaveLength(0);
   await expect(login(form({email:'buyer@example.test',password:'updated-password'}))).rejects.toThrow('REDIRECT /account');
   await expect(logout()).rejects.toThrow('REDIRECT /');expect((await state.pg.query('select 1 from sessions')).rows).toHaveLength(0);
+ },30000);
+ it('enables optional email codes, rejects wrong codes and replay, then disables them',async()=>{
+  await expect(register(registration('new-password'))).rejects.toThrow('REDIRECT /verify-email');
+  state.cookies.set('nex_verify',state.mail[0].token);await expect(confirmEmail()).rejects.toThrow('REDIRECT /login?verified=1');
+  await expect(login(form({email:'buyer@example.test',password:'new-password'}))).rejects.toThrow('REDIRECT /account');
+  expect(state.mail.filter(m=>m.purpose==='2fa-login')).toHaveLength(0);
+  await expect(startTwoFactorSettings(form({purpose:'enable',password:'wrong'}))).rejects.toThrow('REDIRECT /account?security=invalid');
+  await expect(startTwoFactorSettings(form({purpose:'enable',password:'new-password'}))).rejects.toThrow('REDIRECT /two-factor?settings=1');
+  const enableCode=state.mail.at(-1)!.token;const challenge=state.cookies.get('nex_2fa_settings')!;
+  expect((await state.pg.query<{email_2fa_enabled:boolean}>('select email_2fa_enabled from users')).rows[0].email_2fa_enabled).toBe(false);
+  await expect(verifyTwoFactor(form({settings:'1',code:enableCode}))).rejects.toThrow('REDIRECT /account?security=enabled');
+  expect((await state.pg.query<{email_2fa_enabled:boolean}>('select email_2fa_enabled from users')).rows[0].email_2fa_enabled).toBe(true);
+  state.cookies.set('nex_2fa_settings',challenge);await expect(verifyTwoFactor(form({settings:'1',code:enableCode}))).rejects.toThrow('REDIRECT /two-factor?settings=1&error=1');
+  await expect(logout()).rejects.toThrow('REDIRECT /');
+  await expect(login(form({email:'buyer@example.test',password:'new-password'}))).rejects.toThrow('REDIRECT /two-factor');
+  expect(state.cookies.get('nex_session')).toBeUndefined();
+  const code=state.mail.at(-1)!.token;const wrong=code==='000000'?'000001':'000000';
+  await expect(verifyTwoFactor(form({code:wrong}))).rejects.toThrow('REDIRECT /two-factor?error=1');expect(state.cookies.get('nex_session')).toBeUndefined();
+  await expect(verifyTwoFactor(form({code}))).rejects.toThrow('REDIRECT /account');expect(state.cookies.get('nex_session')).toBeTruthy();
+  await expect(startTwoFactorSettings(form({purpose:'disable',password:'new-password'}))).rejects.toThrow('REDIRECT /two-factor?settings=1');
+  await expect(verifyTwoFactor(form({settings:'1',code:state.mail.at(-1)!.token}))).rejects.toThrow('REDIRECT /account?security=disabled');
+  await expect(logout()).rejects.toThrow('REDIRECT /');const count=state.mail.length;
+  await expect(login(form({email:'buyer@example.test',password:'new-password'}))).rejects.toThrow('REDIRECT /account');expect(state.mail).toHaveLength(count);
+ },30000);
+ it('blocks expired and guessed codes without issuing a session',async()=>{
+  await expect(register(registration('new-password'))).rejects.toThrow('REDIRECT /verify-email');state.cookies.set('nex_verify',state.mail[0].token);await expect(confirmEmail()).rejects.toThrow('REDIRECT /login?verified=1');
+  await expect(login(form({email:'buyer@example.test',password:'new-password'}))).rejects.toThrow('REDIRECT /account');
+  await expect(startTwoFactorSettings(form({purpose:'enable',password:'new-password'}))).rejects.toThrow('REDIRECT /two-factor?settings=1');
+  await expect(verifyTwoFactor(form({settings:'1',code:state.mail.at(-1)!.token}))).rejects.toThrow('REDIRECT /account?security=enabled');
+  await expect(logout()).rejects.toThrow('REDIRECT /');
+  await expect(login(form({email:'buyer@example.test',password:'new-password'}))).rejects.toThrow('REDIRECT /two-factor');
+  let code=state.mail.at(-1)!.token;const wrong=code==='000000'?'000001':'000000';
+  for(let i=0;i<5;i++)await expect(verifyTwoFactor(form({code:wrong}))).rejects.toThrow('REDIRECT /two-factor?error=1');
+  await expect(verifyTwoFactor(form({code}))).rejects.toThrow('REDIRECT /two-factor?error=1');expect(state.cookies.get('nex_session')).toBeUndefined();
+  await expect(login(form({email:'buyer@example.test',password:'new-password'}))).rejects.toThrow('REDIRECT /two-factor');code=state.mail.at(-1)!.token;
+  await state.pg.exec("update auth_2fa_challenges set expires_at=now()-interval '1 second'");
+  await expect(verifyTwoFactor(form({code}))).rejects.toThrow('REDIRECT /two-factor?error=1');expect(state.cookies.get('nex_session')).toBeUndefined();
+ },30000);
+ it('binds settings to the current session and fails closed when mail is unavailable',async()=>{
+  await expect(register(registration('new-password'))).rejects.toThrow('REDIRECT /verify-email');state.cookies.set('nex_verify',state.mail[0].token);await expect(confirmEmail()).rejects.toThrow('REDIRECT /login?verified=1');
+  await expect(login(form({email:'buyer@example.test',password:'new-password'}))).rejects.toThrow('REDIRECT /account');
+  state.mailFails=true;
+  await expect(startTwoFactorSettings(form({purpose:'enable',password:'new-password'}))).rejects.toThrow('REDIRECT /account?security=mail');
+  expect((await state.pg.query('select 1 from auth_2fa_challenges')).rows).toHaveLength(0);
+  state.mailFails=false;
+  await expect(startTwoFactorSettings(form({purpose:'enable',password:'new-password'}))).rejects.toThrow('REDIRECT /two-factor?settings=1');
+  const code=state.mail.at(-1)!.token;const session=state.cookies.get('nex_session')!;
+  const row=(await state.pg.query<{code_hash:string;challenge_hash:string}>('select code_hash,challenge_hash from auth_2fa_challenges')).rows[0];
+  expect(row.code_hash).not.toBe(code);expect(row.challenge_hash).not.toBe(state.cookies.get('nex_2fa_settings'));
+  state.cookies.set('nex_session','another-session');await expect(verifyTwoFactor(form({settings:'1',code}))).rejects.toThrow('REDIRECT /two-factor?settings=1&error=1');
+  state.cookies.set('nex_session',session);await expect(verifyTwoFactor(form({settings:'1',code}))).rejects.toThrow('REDIRECT /account?security=enabled');
+  await expect(logout()).rejects.toThrow('REDIRECT /');state.mailConfigured=false;
+  await expect(login(form({email:'buyer@example.test',password:'new-password'}))).rejects.toThrow('REDIRECT /login?error=unconfigured');
+  expect(state.cookies.get('nex_session')).toBeUndefined();
+  state.mailConfigured=true;state.mailFails=true;
+  await expect(login(form({email:'buyer@example.test',password:'new-password'}))).rejects.toThrow('REDIRECT /login?error=mail');
+  expect(state.cookies.get('nex_session')).toBeUndefined();expect((await state.pg.query('select 1 from auth_2fa_challenges')).rows).toHaveLength(0);
  },30000);
  it('limits requests across instances and restarts expired windows',async()=>{
   expect(await checkAuthRateLimit('login:test',2,60)).toBe(true);
