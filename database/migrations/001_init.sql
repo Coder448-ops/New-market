@@ -1,4 +1,17 @@
--- PostgreSQL schema for NEX MARKET. Apply only to a dedicated database.
+-- PostgreSQL schema for NEX MARKET. Apply once, only to a dedicated empty database.
+-- All changes are transactional; stop if another application already uses public.
+begin;
+do $$
+begin
+ if exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+            where n.nspname='public' and c.relkind in ('r','p','v','m','S','f'))
+    or exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+               where n.nspname='public' and p.proname in
+                 ('set_updated_at','recalc_product_rating','create_order','refresh_review_rating')) then
+   raise exception 'NEX MARKET migration requires an empty public schema; no changes applied';
+ end if;
+end;
+$$;
 create extension if not exists "pgcrypto";
 create extension if not exists "pg_trgm";
 create or replace function public.set_updated_at() returns trigger language plpgsql as $$
@@ -466,3 +479,5 @@ begin
 end; $$;
 create trigger review_rating_changed after insert or update or delete on public.reviews
 for each row execute function public.refresh_review_rating();
+
+commit;
