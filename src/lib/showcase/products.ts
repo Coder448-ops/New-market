@@ -15,4 +15,4 @@ const entries = [
  ['Keramika finjon',69000],['Choynak',215000],['Oshxona idishlari to‘plami',279000],['Suv grafin',99000],['Nonushta likopchasi',55000],
  ['Suv idishi',79000],['Yoga gilamchasi',149000],['Mashq rezinkasi',49000],['Sport sumkasi',189000],['Fitnes qo‘lqopi',69000],
 ] as const;
-export const showcaseProducts=entries.map(([name,price],index)=>({id:index+1,name,price,category:showcaseCategories[Math.floor(index/5)]}));
+export const showcaseProducts=entries.map(([name,price],index)=>({id:index+1,name,price,image:`/images/items/${String(index+1).padStart(2,'0')}.${index<10?'webp':'svg'}`,category:showcaseCategories[Math.floor(index/5)]}));

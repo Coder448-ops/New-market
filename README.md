@@ -9,7 +9,7 @@ Next.js va PostgreSQL asosidagi marketplace. Parolsiz demo login va demo admin y
 3. `.env.example` dan mahalliy maxfiy `.env.local` yarating. Serverga `DATABASE_URL`, tashqi HTTPS `NEXT_PUBLIC_APP_URL`, ixtiyoriy email ikki bosqichli himoya uchun SMTP qiymatlarini kiriting. SMS xizmati talab qilinmaydi. Maxfiy qiymatlarni Git yoki chatga joylamang. Production bazasi TLS bilan himoyalanishi kerak.
 4. `npm ci`, migratsiyadan keyin `npm run dev`. Vercel production environment variable'lari server-side sifatida belgilanadi; migratsiya build vaqtida avtomatik ishlamaydi.
 
-`/namunalar` — 30 ta statik namunaviy mahsulot va namunaviy narxlar ko‘rgazmasi; mahsulotlar bazaga yozilmaydi, sotib olib bo‘lmaydi, suratlar turkumning illustratsiyasidir. Kategoriyalarga ajratib ko‘rish mumkin. `tests/fixtures/catalog.sql` **faqat PGlite testlari** uchun; production bazasiga yuklamang. Haqiqiy katalog mahsulotlarini vakolatli admin kiritadi. Rasm uchun HTTPS manzil kiritish mumkin; doimiy rasm saqlash va upload hali amalga oshirilmagan.
+`/namunalar` — 30 ta statik namunaviy mahsulot va namunaviy narxlar ko‘rgazmasi; mahsulotlar bazaga yozilmaydi, sotib olib bo‘lmaydi, har birining o‘ziga xos namunaviy tasviri bor (birinchi 10 tasi AI tasvirlar, qolganlari vektor illustratsiyalar). Kategoriyalarga ajratib ko‘rish mumkin. `tests/fixtures/catalog.sql` **faqat PGlite testlari** uchun; production bazasiga yuklamang. Haqiqiy katalog mahsulotlarini vakolatli admin kiritadi. Rasm uchun HTTPS manzil kiritish mumkin; doimiy rasm saqlash va upload hali amalga oshirilmagan.
 
 ## Hisob va administrator
 
