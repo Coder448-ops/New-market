@@ -3,12 +3,13 @@ import {revalidatePath} from 'next/cache';
 import {requireAdmin} from '@/lib/auth/session';
 import {db} from '@/lib/db';
 import {z} from 'zod';
+import {importShowcaseSql,showcaseImportValues} from '@/lib/database/import-showcase';
 
 async function assertAdmin(){const auth=await requireAdmin();if('error' in auth)throw Error('Forbidden')}
 const id=z.string().uuid();
 const slug=z.string().trim().regex(/^[a-z0-9-]{3,200}$/);
 const optionalId=z.union([z.literal(''),id]).transform(v=>v||null);
-const imageUrl=z.union([z.literal(''),z.string().url().max(2000).refine(v=>new URL(v).protocol==='https:', 'Faqat HTTPS manzil')]).transform(v=>v||null);
+const imageUrl=z.union([z.literal(''),z.string().regex(/^\/images\/items\/(?:0[1-9]|[12][0-9]|30)\.(?:webp|svg)$/),z.string().url().max(2000).refine(v=>new URL(v).protocol==='https:', 'Faqat HTTPS manzil')]).transform(v=>v||null);
 export async function updateAdminRecord(form:FormData){
  await assertAdmin();const recordId=id.parse(form.get('id')),type=String(form.get('type')),value=String(form.get('value'));
  if(type==='orders'){
@@ -40,4 +41,12 @@ export async function saveTaxonomy(form:FormData){
  if(p.id)await db().query(`update ${p.type} set name=$1,slug=$2,is_active=$3 where id=$4`,[p.name,p.slug,active,p.id]);
  else await db().query(`insert into ${p.type}(name,slug,is_active) values($1,$2,$3)`,[p.name,p.slug,active]);
  revalidatePath('/admin/'+p.type);revalidatePath('/catalog');revalidatePath('/');
+}
+
+// Explicit admin action; never run on startup or during deployment.
+export async function importTestProducts(form:FormData){
+ await assertAdmin();
+ if(form.get('confirm')!=='on')throw Error('Tasdiqlash talab qilinadi');
+ await db().query(importShowcaseSql,showcaseImportValues());
+ revalidatePath('/admin/products');revalidatePath('/catalog');revalidatePath('/');
 }

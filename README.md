@@ -1,6 +1,6 @@
 # NEX MARKET
 
-Next.js va PostgreSQL asosidagi marketplace. Parolsiz demo login va demo admin yo‘q. Foydalanuvchi so‘roviga ko‘ra 30 ta alohida belgilangan namunaviy mahsulot ko‘rgazmasi mavjud; ular haqiqiy katalog va buyurtmalarga qo‘shilmaydi. **Onlayn baza va SMTP ishlashi hali tasdiqlanmagan**, shuning uchun haqiqiy hisob va buyurtmalar ishlashi tasdiqlanmagan. Payme va Click ulanmagan. Ilova hali real savdoga tayyor emas.
+Next.js va PostgreSQL asosidagi marketplace. Parolsiz demo login va demo admin yo‘q. 30 ta sinov mahsuloti admin tomonidan ixtiyoriy ravishda haqiqiy katalogga kiritilishi mumkin. Ularning rasmlari, narxlari va qoldig‘i haqiqiy savdo uchun tasdiqlanmagan; ular bilan yaratilgan buyurtmalar bazaga haqiqiy yozuv sifatida tushadi. **Onlayn baza va SMTP ishlashi hali tasdiqlanmagan**, shuning uchun haqiqiy hisob va buyurtmalar ishlashi tasdiqlanmagan. Payme va Click ulanmagan. Ilova hali real savdoga tayyor emas.
 
 ## Sozlash
 
@@ -9,7 +9,7 @@ Next.js va PostgreSQL asosidagi marketplace. Parolsiz demo login va demo admin y
 3. `.env.example` dan mahalliy maxfiy `.env.local` yarating. Serverga `DATABASE_URL`, tashqi HTTPS `NEXT_PUBLIC_APP_URL`, ixtiyoriy email ikki bosqichli himoya uchun SMTP qiymatlarini kiriting. SMS xizmati talab qilinmaydi. Maxfiy qiymatlarni Git yoki chatga joylamang. Production bazasi TLS bilan himoyalanishi kerak.
 4. `npm ci`, migratsiyadan keyin `npm run dev`. Vercel production environment variable'lari server-side sifatida belgilanadi; migratsiya build vaqtida avtomatik ishlamaydi.
 
-`/namunalar` — 30 ta statik namunaviy mahsulot va namunaviy narxlar ko‘rgazmasi; mahsulotlar bazaga yozilmaydi, sotib olib bo‘lmaydi, har birining o‘ziga xos namunaviy tasviri bor (birinchi 10 tasi AI tasvirlar, qolganlari vektor illustratsiyalar). Kategoriyalarga ajratib ko‘rish mumkin. `tests/fixtures/catalog.sql` **faqat PGlite testlari** uchun; production bazasiga yuklamang. Haqiqiy katalog mahsulotlarini vakolatli admin kiritadi. Rasm uchun HTTPS manzil kiritish mumkin; doimiy rasm saqlash va upload hali amalga oshirilmagan.
+`/namunalar` eski havolasi `/catalog` sahifasiga yo‘naltiradi. 30 ta mahsulot avtomatik kiritilmaydi. Admin hisob bilan `/admin/products` sahifasida tasdiqlash katagini belgilab **30 ta mahsulotni qo‘shish** tugmasini bosing. Bu olti turkum va 30 ta nashr etilgan mahsulotni bazaga yozadi: har birida 10 dona sinov qoldig‘i va avvalgi ko‘rgazmaning shartli narxi bor. SKU `NEX-SINOV-` bilan boshlanadi; katalog, mahsulot va savatda sinov holati ko‘rsatiladi. Bu haqiqiy mavjudlik yoki yetkazib berishni tasdiqlamaydi; onlayn to‘lov yo‘q. Mavjud mahsulotlar o‘zgartirilmaydi, takrorlash o‘sha slug/SKU larni qayta yozmaydi; to‘qnashgan slug yoki SKU o‘tkazib yuboriladi. Qayta import o‘zgartirilgan narx yoki qoldiqni tiklamaydi. Muqobil ravishda, bazaning to‘g‘ri branchini tekshirib va zaxira olib, `database/import-test-products.sql` faylini Neon SQL Editor’da bir marta ishlatish mumkin; bu boshqa migratsiyalarni qayta ishga tushirmaydi. `tests/fixtures/catalog.sql` faqat testlar uchun. Admin bu mahsulotlarning narxi, qoldig‘i va rasmini tahrirlashi mumkin.
 
 ## Hisob va administrator
 

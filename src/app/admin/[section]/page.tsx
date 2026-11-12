@@ -1,7 +1,7 @@
 import {notFound,redirect} from 'next/navigation';
 import {db} from '@/lib/db';
 import {requireAdmin} from '@/lib/auth/session';
-import {updateAdminRecord} from '../actions';
+import {updateAdminRecord,importTestProducts} from '../actions';
 import {ProductEditor} from '@/components/admin/product-editor';
 import {TaxonomyEditor} from '@/components/admin/taxonomy-editor';
 import {formatPrice} from '@/lib/utils/format';
@@ -13,7 +13,7 @@ export default async function Page({params}:{params:Promise<{section:string}>}){
  const {rows:data}=await db().query(`select * from ${table} limit 100`);
  const [categories,brands]=section==='products'?await Promise.all([db().query('select * from categories order by name'),db().query('select * from brands order by name')]):[{rows:[]},{rows:[]}];
  return <><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-brand-700">BOSHQARUV</p><h1 className="mt-2 text-3xl font-bold tracking-tight">{title}</h1><p className="mt-2 text-sm text-gray-500">Birinchi 100 ta yozuv · {data.length} ta ko‘rsatilmoqda</p></div></div>
- <div className="mt-7 grid gap-3">{section==='products'&&<ProductEditor categories={categories.rows} brands={brands.rows}/>}{(section==='categories'||section==='brands')&&<TaxonomyEditor type={section}/>}
+ <div className="mt-7 grid gap-3">{section==='products'&&<><form action={importTestProducts} className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950"><h2 className="font-bold">30 ta mahsulotni sinash uchun qo‘shish</h2><p className="mt-2 leading-6">Bu ma’lumotlar haqiqiy katalogga yoziladi. Narx, rasm va har biri uchun 10 dona qoldiq sinov uchun; mavjudligi va yetkazib berilishi tasdiqlanmagan. Buyurtmalar haqiqiy bazaga tushadi. Mavjud mahsulotlar o‘zgartirilmaydi.</p><label className="mt-4 flex items-start gap-2"><input type="checkbox" name="confirm" required className="mt-1"/> Tushundim, katalogga qo‘shilsin</label><button className="primary mt-4">30 ta mahsulotni qo‘shish</button></form><ProductEditor categories={categories.rows} brands={brands.rows}/></>}{(section==='categories'||section==='brands')&&<TaxonomyEditor type={section}/>}
  {data.map(row=>{const r=row as Record<string,unknown>;const rowId=String(r.id||r.key);
   if(section==='products')return <ProductEditor key={rowId} product={row as Product} categories={categories.rows} brands={brands.rows}/>;
   if(section==='categories'||section==='brands')return <TaxonomyEditor key={rowId} type={section} item={row as Category|Brand}/>;

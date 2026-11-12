@@ -1,4 +1,4 @@
-// Illustrative catalogue only. These records are never inserted into the marketplace database.
+// Source data for an explicit, administrator-only test catalogue import.
 export const showcaseCategories = [
   {id:'texnika', title:'Texnika', image:'/images/sample-tech.webp', color:'bg-[#ece8f8]'},
   {id:'uy', title:'Uy uchun', image:'/images/sample-home.webp', color:'bg-[#f2ebe3]'},

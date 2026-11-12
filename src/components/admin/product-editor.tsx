@@ -6,7 +6,7 @@ export function ProductEditor({product:p,categories,brands}:{product?:Product;ca
  <label className="text-sm font-medium">Nomi<input className="field mt-1" name="name" required minLength={3} maxLength={200} defaultValue={p?.name}/></label>
  <label className="text-sm font-medium">URL nomi (slug)<input className="field mt-1" name="slug" placeholder="masalan-oq-sumka" required pattern="[a-z0-9-]{3,200}" defaultValue={p?.slug}/></label>
  <label className="text-sm font-medium">SKU<input className="field mt-1" name="sku" maxLength={100} defaultValue={p?.sku||''}/></label>
- <label className="text-sm font-medium">Rasm HTTPS manzili<input className="field mt-1" name="main_image" type="url" placeholder="https://..." defaultValue={p?.main_image||''}/></label>
+ <label className="text-sm font-medium">Rasm manzili (HTTPS yoki mavjud ichki tasvir)<input className="field mt-1" name="main_image" type="text" placeholder="https://..." defaultValue={p?.main_image||''}/></label>
  <label className="text-sm font-medium">Turkum<select name="category_id" className="field mt-1" defaultValue={p?.category_id||''}><option value="">Tanlanmagan</option>{categories.map(c=><option value={c.id} key={c.id}>{c.name}</option>)}</select></label>
  <label className="text-sm font-medium">Brend<select name="brand_id" className="field mt-1" defaultValue={p?.brand_id||''}><option value="">Tanlanmagan</option>{brands.map(b=><option value={b.id} key={b.id}>{b.name}</option>)}</select></label>
  <label className="text-sm font-medium">Narx, so‘m<input className="field mt-1" type="number" min="0" max="1000000000" required name="price" defaultValue={p?.price}/></label>
