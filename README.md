@@ -1,6 +1,6 @@
 # NEX MARKET
 
-Next.js va PostgreSQL asosidagi marketplace. Foydalanuvchi ko‘rsatmasiga binoan namunaviy demo katalog, parolsiz demo login va demo admin saytdan olib tashlandi. **Onlayn baza va SMTP ishlashi hali tasdiqlanmagan**, shuning uchun haqiqiy hisob va buyurtmalar ishlashi tasdiqlanmagan. Payme va Click ulanmagan. Ilova hali real savdoga tayyor emas.
+Next.js va PostgreSQL asosidagi marketplace. Parolsiz demo login va demo admin yo‘q. Foydalanuvchi so‘roviga ko‘ra 30 ta alohida belgilangan namunaviy mahsulot ko‘rgazmasi mavjud; ular haqiqiy katalog va buyurtmalarga qo‘shilmaydi. **Onlayn baza va SMTP ishlashi hali tasdiqlanmagan**, shuning uchun haqiqiy hisob va buyurtmalar ishlashi tasdiqlanmagan. Payme va Click ulanmagan. Ilova hali real savdoga tayyor emas.
 
 ## Sozlash
 
@@ -9,7 +9,7 @@ Next.js va PostgreSQL asosidagi marketplace. Foydalanuvchi ko‘rsatmasiga binoa
 3. `.env.example` dan mahalliy maxfiy `.env.local` yarating. Serverga `DATABASE_URL`, tashqi HTTPS `NEXT_PUBLIC_APP_URL`, ixtiyoriy email ikki bosqichli himoya uchun SMTP qiymatlarini kiriting. SMS xizmati talab qilinmaydi. Maxfiy qiymatlarni Git yoki chatga joylamang. Production bazasi TLS bilan himoyalanishi kerak.
 4. `npm ci`, migratsiyadan keyin `npm run dev`. Vercel production environment variable'lari server-side sifatida belgilanadi; migratsiya build vaqtida avtomatik ishlamaydi.
 
-`tests/fixtures/catalog.sql` **faqat PGlite testlari** uchun namunaviy ma’lumotlardir; production bazasiga yuklamang. Haqiqiy katalog mahsulotlarini vakolatli admin kiritishi kerak. Doimiy rasm saqlash va upload hali amalga oshirilmagan.
+`/namunalar` — 30 ta statik namunaviy mahsulot va namunaviy narxlar ko‘rgazmasi; mahsulotlar bazaga yozilmaydi, sotib olib bo‘lmaydi, suratlar turkumning illustratsiyasidir. Kategoriyalarga ajratib ko‘rish mumkin. `tests/fixtures/catalog.sql` **faqat PGlite testlari** uchun; production bazasiga yuklamang. Haqiqiy katalog mahsulotlarini vakolatli admin kiritadi. Rasm uchun HTTPS manzil kiritish mumkin; doimiy rasm saqlash va upload hali amalga oshirilmagan.
 
 ## Hisob va administrator
 
@@ -34,9 +34,13 @@ Auth uchun parol xeshi, sessiya, tasdiqlash xati unit testlari hamda PGlite orqa
 
 `relation "categories" does not exist` — ulanish vaqtida joriy baza/search_path da kerakli jadval topilmadi. Neon branchi va maqsadli bo‘sh bazani tekshirib migratsiyani bir marta ishga tushiring; ma’lumotli bazani o‘zgartirishdan oldin zaxira oling. Migratsiya build vaqtida ishga tushirilmaydi. Bosh sahifa va sitemap deployment build paytida bazani o‘qimaydi, lekin ishlash vaqtida katalog/auth uchun mos sxema va haqiqiy ulanish shart. SMTP ham alohida sozlanishi kerak.
 
+### Admin panel
+
+`/admin` server tomonida admin rolini tekshiradi, demo yoki umumiy parol yo‘q. Mahsulotlarni qo‘shish/tahrirlash (narx, chegirma, qoldiq, turkum, brend va HTTPS rasm), turkum va brendlarni qo‘shish/tahrirlash, buyurtma holati, ombor va sharhlar uchun amallar bor. Kuponlar, bannerlar, mijozlar va sozlamalar hozircha ko‘rish uchun; to‘liq CRUD emas. Mahsulotni o‘chirish haqiqiy yozuvga ta’sir qiladi. Bekor qilingan buyurtmalar admin paneldan qayta ochilmaydi; qaytarish/stock tranzaksiyasi hali yo‘q. Admin roli bazada vakolatli operator tomonidan qo‘lda tayinlanadi, o‘z-o‘zidan berilmaydi.
+
 ### Email 2FA
 
-SMTP barcha email manzillarga (jumladan Gmail) kod yuborish uchun kerak. Arena Gmail ulanishi veb-ilova uchun doimiy SMTP ulanishi emas. SMTP ishlamasa email 2FA o‘chirilmaydi va kod bilan kirish chetlab o‘tilmaydi. Auth holati PGlite va mock SMTP bilan tekshirilgan; real Neon, SMTP va brauzer orqali sinov shart. `auth_2fa_challenges` va `auth_rate_limits` muddati o‘tgan qatorlarini davriy tozalash kerak.
+SMTP barcha email manzillarga (jumladan Gmail) kod yuborish uchun kerak. Vercel Project → Settings → Environment Variables sahifasida production uchun `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` va to‘g‘ri HTTPS `NEXT_PUBLIC_APP_URL` ni xizmat provayderi ma’lumotlari bilan sozlang; maxfiy qiymatlarni chatga, Git'ga yoki logga yubormang. Masalan, Gmail yuboruvchi sifatida tanlansa: `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER` va `MAIL_FROM` tegishli Gmail manzili, `SMTP_PASSWORD` esa Google hisobidagi 2-Step Verification orqali yaratilgan App Password bo‘lishi mumkin; uning mavjudligi hisob siyosatiga bog‘liq. Qiymatlarni operator to‘g‘ridan-to‘g‘ri Vercel'ga kiritadi, keyin yangi deployment zarur. Gmail jo‘natish cheklovlari va provider shartlari qo‘llanadi. Arena Gmail ulanishi veb-ilova uchun doimiy SMTP ulanishi emas. SMTP ishlamasa email 2FA o‘chirilmaydi va kod bilan kirish chetlab o‘tilmaydi. Auth holati PGlite va mock SMTP bilan tekshirilgan; real Neon, SMTP va brauzer orqali sinov shart. `auth_2fa_challenges` va `auth_rate_limits` muddati o‘tgan qatorlarini davriy tozalash kerak.
 
 ### Telefon autentifikatsiyasi va eski hisoblar
 
