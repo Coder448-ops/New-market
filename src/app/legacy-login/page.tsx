@@ -1,0 +1,7 @@
+import Link from 'next/link';
+import {legacyLogin} from '@/app/actions';
+import {isDatabaseConfigured} from '@/lib/db';
+export default async function Page({searchParams}:{searchParams:Promise<{error?:string}>}){
+ const {error}=await searchParams;
+ return <div className="wrap py-14"><div className="mx-auto max-w-md rounded-2xl border p-7"><h1 className="text-2xl font-bold">Eski hisobni ko‘chirish</h1><p className="mt-3 text-sm text-gray-600">Faqat avval email bilan yaratilgan hisoblar uchun. Kirgach, hisob sahifasida telefon raqamingizni ulang. Keyin telefon bilan kirasiz.</p>{error&&<p role="alert" className="mt-4 text-sm text-red-700">Ma’lumotlarni tekshiring va qayta urinib ko‘ring.</p>}<form action={legacyLogin} className="mt-6 grid gap-4"><label className="text-sm">Eski hisob emaili<input className="field mt-1" name="email" type="email" autoComplete="email" required/></label><label className="text-sm">Parol<input className="field mt-1" name="password" type="password" autoComplete="current-password" required maxLength={256}/></label><button disabled={!isDatabaseConfigured()} className="primary disabled:opacity-40">Kirish</button></form><div className="mt-5 flex gap-4 text-sm text-brand-700"><Link href="/forgot-password">Eski parolni tiklash</Link><Link href="/login">Telefon bilan kirish</Link></div></div></div>;
+}

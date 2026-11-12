@@ -4,17 +4,17 @@ export const phoneSchema = z
   .string()
   .regex(/^(\+998[\s-]?)?(\d{2}[\s-]?)?\d{3}[\s-]?\d{2}[\s-]?\d{2}$/, "Telefon raqam noto‘g‘ri formatda");
 
+// Accept only Uzbek mobile-number format, normalize input to canonical E.164.
+export const loginPhoneSchema = z.string().transform(v=>v.replace(/[\s()-]/g,'')).transform(v=>v.startsWith('+998')?v:'+998'+v).refine(v=>/^\+998\d{9}$/.test(v), 'Telefon raqam 9 ta raqamdan iborat bo‘lishi kerak');
 export const registerSchema = z.object({
-  firstName: z.string().min(2, "Ism kamida 2 ta belgi bo‘lishi kerak").max(100),
-  lastName: z.string().min(2, "Familiya kamida 2 ta belgi bo‘lishi kerak").max(100),
-  email: z.string().email("Email noto‘g‘ri").max(254),
-  phone: phoneSchema.optional().or(z.literal("")),
-  password: z.string().min(8, "Parol kamida 8 ta belgi bo‘lishi kerak").max(256),
+  firstName: z.string().trim().min(2).max(100),
+  lastName: z.string().trim().min(2).max(100),
+  phone: loginPhoneSchema,
+  password: z.string().min(8).max(256),
 });
-
 export const loginSchema = z.object({
-  email: z.string().email("Email noto‘g‘ri").max(254),
-  password: z.string().min(1, "Parolni kiriting").max(256),
+  phone: loginPhoneSchema,
+  password: z.string().min(1).max(256),
 });
 
 export const checkoutSchema = z.object({
