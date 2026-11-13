@@ -1,4 +1,4 @@
-import {notFound,redirect} from 'next/navigation';
+import {notFound} from 'next/navigation';
 import {db} from '@/lib/db';
 import {requireAdmin} from '@/lib/auth/session';
 import {updateAdminRecord,importTestProducts} from '../actions';
@@ -9,7 +9,7 @@ import {ORDER_STATUS_LABELS,type OrderStatus,type Product,type Category,type Bra
 const sections={products:['Mahsulotlar','products'],categories:['Turkumlar','categories'],brands:['Brendlar','brands'],orders:['Buyurtmalar','orders'],customers:['Mijozlar','profiles'],inventory:['Ombor','products'],promotions:['Kuponlar','coupons'],reviews:['Sharhlar','reviews'],banners:['Bannerlar','banners'],settings:['Sozlamalar','site_settings']} as const;
 export default async function Page({params}:{params:Promise<{section:string}>}){
  const {section}=await params;if(!(section in sections))notFound();const [title,table]=sections[section as keyof typeof sections];
- const auth=await requireAdmin();if('error' in auth)redirect('/login');
+ const auth=await requireAdmin();if('error' in auth)return null;
  const {rows:data}=await db().query(`select * from ${table} limit 100`);
  const [categories,brands]=section==='products'?await Promise.all([db().query('select * from categories order by name'),db().query('select * from brands order by name')]):[{rows:[]},{rows:[]}];
  return <><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-brand-700">BOSHQARUV</p><h1 className="mt-2 text-3xl font-bold tracking-tight">{title}</h1><p className="mt-2 text-sm text-gray-500">Birinchi 100 ta yozuv · {data.length} ta ko‘rsatilmoqda</p></div></div>

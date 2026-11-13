@@ -1,11 +1,10 @@
 import Link from 'next/link';
 import {db} from '@/lib/db';
 import {requireAdmin} from '@/lib/auth/session';
-import {redirect} from 'next/navigation';
 import {formatPrice} from '@/lib/utils/format';
 import {ORDER_STATUS_LABELS,type OrderStatus} from '@/types';
 export default async function Page(){
- const auth=await requireAdmin();if('error' in auth)redirect('/login');
+ const auth=await requireAdmin();if('error' in auth)return null;
  const [counts,products,customers,recent]=await Promise.all([db().query("select count(*)::int total,count(*) filter(where status='pending')::int pending,count(*) filter(where status='delivered')::int delivered,coalesce(sum(total) filter(where status='delivered'),0)::bigint revenue from orders"),db().query('select count(*)::int total,count(*) filter(where stock<5)::int low from products'),db().query('select count(*)::int total from profiles'),db().query('select id,total,status,order_number from orders order by created_at desc limit 10')]);
  const o=counts.rows[0],p=products.rows[0];const stats=[['Buyurtmalar',o.total],['Kutilmoqda',o.pending],['Yetkazilgan',o.delivered],['Yetkazilgan buyurtmalar summasi',formatPrice(o.revenue)],['Mahsulotlar',p.total],['Kam qolgan',p.low],['Mijozlar',customers.rows[0].total]];
  return <><p className="text-xs font-bold uppercase tracking-[.18em] text-brand-700">UMUMIY KO‘RINISH</p><h1 className="mt-2 text-3xl font-bold tracking-tight">Boshqaruv paneli</h1><p className="mt-2 text-sm text-gray-500">Do‘koningizdagi ma’lumotlar bir joyda.</p><div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{stats.map(([label,value])=><div key={label} className="rounded-2xl border bg-white p-5"><p className="text-sm text-gray-500">{label}</p><p className="mt-4 text-2xl font-bold">{value}</p></div>)}</div><section className="mt-10 rounded-2xl border bg-white p-5"><div className="flex items-center justify-between gap-4"><h2 className="text-xl font-bold">So‘nggi buyurtmalar</h2><Link href="/admin/orders" className="text-sm font-semibold text-brand-700">Barchasi →</Link></div>{recent.rows.length===0?<p className="py-7 text-sm text-gray-500">Hozircha buyurtmalar yo‘q.</p>:<div className="mt-4">{recent.rows.map(o=><div key={o.id} className="flex flex-wrap justify-between gap-3 border-b py-4 text-sm last:border-0"><span className="font-semibold">{o.order_number}</span><span className="text-gray-500">{ORDER_STATUS_LABELS[o.status as OrderStatus]||o.status}</span><b>{formatPrice(o.total)}</b></div>)}</div>}</section></>

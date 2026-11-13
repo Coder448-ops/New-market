@@ -81,4 +81,23 @@ describe('phone and optional email authentication',()=>{
   await expect(legacyLogin(form({email:'old@example.test',password:'updated-password'}))).rejects.toThrow('REDIRECT /account');
  },30000);
  it('uses database-backed limits',async()=>{expect(await checkAuthRateLimit('key',2,60)).toBe(true);expect(await checkAuthRateLimit('key',2,60)).toBe(true);expect(await checkAuthRateLimit('key',2,60)).toBe(false);});
+ it('returns admin sign-in to admin and never accepts arbitrary return URLs',async()=>{
+  await registerUser();
+  await expect(login(form({phone:'901234567',password:'wrong',next:'admin'}))).rejects.toThrow('REDIRECT /login?error=auth&next=admin');
+  await expect(login(form({phone:'901234567',password:'new-password',next:'admin'}))).rejects.toThrow('REDIRECT /admin');
+  await expect(logout()).rejects.toThrow('REDIRECT /');
+  await expect(login(form({phone:'901234567',password:'new-password',next:'https://evil.test'}))).rejects.toThrow('REDIRECT /account');
+ },30000);
+ it('keeps the admin destination through optional email two-factor authentication',async()=>{
+  await registerUser();await expect(login(phoneLogin())).rejects.toThrow('REDIRECT /account');
+  await expect(startTwoFactorSettings(form({purpose:'enable',password:'new-password',email:'buyer@example.test'}))).rejects.toThrow('REDIRECT /two-factor?settings=1');
+  await expect(verifyTwoFactor(form({settings:'1',code:state.mail.at(-1)!.token}))).rejects.toThrow('REDIRECT /account?security=enabled');
+  await expect(logout()).rejects.toThrow('REDIRECT /');
+  await expect(login(form({phone:'901234567',password:'new-password',next:'admin'}))).rejects.toThrow('REDIRECT /two-factor');
+  expect(state.cookies.get('nex_session')).toBeUndefined();
+  await expect(verifyTwoFactor(form({code:state.mail.at(-1)!.token}))).rejects.toThrow('REDIRECT /admin');
+  expect(state.cookies.get('nex_session')).toBeTruthy();
+  expect(state.cookies.has('nex_login_destination')).toBe(false);
+ },30000);
+
 });

@@ -12,14 +12,16 @@ import {z} from 'zod';
 
 const dummyHash='9d5018dbe45ed13d18d01a76aefb2937:2ba5b84bcbd2b6a4f4a139d95bd77f96da88aaaf819d2277dec333febe4c4d83e08d008df1118ced9db82b790d1f8f62efd6f55c395b8f53f261fee5bf4a2996';
 async function loginWithIdentifier(form:FormData,legacy:boolean){
- if(!isDatabaseConfigured())redirect('/login?error=unconfigured');
+ const adminDestination=form.get('next')==='admin';
+ const errorPath=(error:string)=>`${legacy?'/legacy-login':'/login'}?error=${error}${adminDestination?'&next=admin':''}`;
+ if(!isDatabaseConfigured())redirect(errorPath('unconfigured'));
  const fields=Object.fromEntries(form);const p=legacy?z.object({email:z.string().trim().email().max(254),password:z.string().min(1).max(256)}).safeParse(fields):loginSchema.safeParse(fields);
- if(!p.success)redirect(legacy?'/legacy-login?error=invalid':'/login?error=invalid');
+ if(!p.success)redirect(errorPath('invalid'));
  const identifier=legacy?String(fields.email).trim().toLowerCase():(p.data as {phone:string}).phone;
- if(!await checkAuthRateLimit('login:'+identifier,10,60))redirect(legacy?'/legacy-login?error=auth':'/login?error=auth');
+ if(!await checkAuthRateLimit('login:'+identifier,10,60))redirect(errorPath('auth'));
  const {rows}=await db().query(legacy?'select id,password_hash,email_verified_at,phone_verified_at,phone_e164,email from users where email=$1 and phone_e164 is null':'select id,password_hash,email_verified_at,phone_verified_at,phone_e164,email from users where phone_e164=$1',[identifier]);
  const user=rows[0];const valid=await verifyPassword(p.data.password,user?.password_hash||dummyHash);
- if(!user||!(legacy?user.email_verified_at:user.phone_e164)||!valid)redirect(legacy?'/legacy-login?error=auth':'/login?error=auth');
+ if(!user||!(legacy?user.email_verified_at:user.phone_e164)||!valid)redirect(errorPath('auth'));
  const challenge=makeChallenge(),sessionToken=makeToken(),expires=new Date(Date.now()+14*24*60*60*1000);
  const client=await db().connect();let mode:'login'|'normal'|'invalid'|'unconfigured'|'limited'='invalid';let loginEmail:string|undefined;
  try{
@@ -41,13 +43,15 @@ async function loginWithIdentifier(form:FormData,legacy:boolean){
   }
   await client.query('commit');
  }catch{await client.query('rollback');mode='invalid'}finally{client.release()}
- if(mode==='unconfigured')redirect('/login?error=unconfigured');
- if(mode==='invalid'||mode==='limited')redirect('/login?error=auth');
+ if(mode==='unconfigured')redirect(errorPath('unconfigured'));
+ if(mode==='invalid'||mode==='limited')redirect(errorPath('auth'));
  const store=await cookies();
  // Remove an older session after credentials are accepted, so it cannot mask the challenge.
  const old=store.get(cookieName)?.value;if(old)await db().query('delete from sessions where token_hash=$1',[hashToken(old)]);store.delete(cookieName);
- if(mode==='normal'){store.set(cookieName,sessionToken,sessionCookieOptions(expires));redirect('/account')}
- try{await sendTwoFactorCode(loginEmail!,challenge.code,'login')}catch{await db().query('delete from auth_2fa_challenges where challenge_hash=$1',[challenge.tokenHash]);redirect('/login?error=mail')}
+ store.delete('nex_login_destination');
+ if(mode==='normal'){store.set(cookieName,sessionToken,sessionCookieOptions(expires));redirect(adminDestination?'/admin':'/account')}
+ try{await sendTwoFactorCode(loginEmail!,challenge.code,'login')}catch{await db().query('delete from auth_2fa_challenges where challenge_hash=$1',[challenge.tokenHash]);redirect(errorPath('mail'))}
+ if(adminDestination)store.set('nex_login_destination','admin',challengeCookieOptions());
  store.set('nex_2fa_login',challenge.token,challengeCookieOptions());redirect('/two-factor');
 }
 export async function login(form:FormData){return loginWithIdentifier(form,false)}
@@ -92,7 +96,7 @@ export async function startPhoneAttach(form:FormData){
  }catch{await client.query('rollback');done=false}finally{client.release()}
  redirect(done?'/account?phone=attached':'/account?phone=invalid');
 }
-export async function logout(){await destroySession();redirect('/')}
+export async function logout(){await destroySession();(await cookies()).delete('nex_login_destination');redirect('/')}
 export async function resetPassword(form:FormData){
  if(!isDatabaseConfigured()||!isMailConfigured())redirect('/forgot-password?error=unconfigured');
  const email=String(form.get('email')||'').toLowerCase().trim();
@@ -189,6 +193,6 @@ export async function verifyTwoFactor(form:FormData){
  }catch{await client.query('rollback');outcome='invalid'}finally{client.release()}
  if(outcome!=='success')redirect(errorPath);
  store.delete(cookie);
- if(purpose==='login'){store.set(cookieName,sessionToken,sessionCookieOptions(expires));redirect('/account')}
+ if(purpose==='login'){const destination=store.get('nex_login_destination')?.value==='admin'?'/admin':'/account';store.delete('nex_login_destination');store.set(cookieName,sessionToken,sessionCookieOptions(expires));redirect(destination)}
  redirect('/account?security='+ (purpose==='enable'?'enabled':'disabled'));
 }
