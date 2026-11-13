@@ -11,3 +11,26 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .primary{display:inline-flex;align-items:center;justify-content:center;background:#6d28d9;color:white;border-radius:12px;padding:12px 20px;font-weight:600}
 .primary:hover{background:#5b21b6}
 @media(max-width:640px){.wrap{padding-inline:16px}body{padding-bottom:72px}}
+
+/* Shared dark palette for the existing marketplace and admin surfaces. The
+   photographic hero deliberately retains its light artwork and typography. */
+html[data-theme='dark']{color-scheme:dark}
+html[data-theme='dark'] body{background:#100e19;color:#f1eef7}
+html[data-theme='dark'] .field{background:#211d2d;border-color:#484155;color:#f1eef7}
+html[data-theme='dark'] ::placeholder{color:#a9a1b6;opacity:1}
+html[data-theme='dark'] :where(.bg-white,.bg-white\/95,.bg-\[\#f8f7fa\],.bg-\[\#f9f9fb\],.bg-\[\#f6f4fa\],.bg-\[\#f5f4f7\],.bg-\[\#fbfafe\],.bg-gray-50,.bg-gray-100):not(.theme-hero *){background-color:#211d2d}
+html[data-theme='dark'] :where(.bg-brand-50,.bg-brand-100,.bg-\[\#eee8fb\]):not(.theme-hero *){background-color:#302443}
+html[data-theme='dark'] .bg-amber-50{background-color:#392b18}
+html[data-theme='dark'] .bg-red-50{background-color:#3d2028}
+html[data-theme='dark'] .bg-green-50{background-color:#18382d}
+html[data-theme='dark'] :where(.text-gray-900,.text-gray-800,.text-gray-700,.text-\[\#241a38\]):not(.theme-hero *){color:#eeeaf5}
+html[data-theme='dark'] :where(.text-gray-600,.text-gray-500,.text-gray-400,.text-gray-300):not(.theme-hero *){color:#bcb4c9}
+html[data-theme='dark'] :where(.text-brand-500,.text-brand-600,.text-brand-700,.text-brand-800,.text-violet-700):not(.theme-hero *){color:#c4a7ff}
+html[data-theme='dark'] :where(.text-amber-800,.text-amber-900,.text-amber-950){color:#f5ce82}
+html[data-theme='dark'] :where(.text-red-600,.text-red-700){color:#fda4af}
+html[data-theme='dark'] .text-emerald-700{color:#86efac}
+html[data-theme='dark'] :where(.border,.border-b,.border-t,.border-gray-100,.border-gray-200,.border-gray-300){border-color:#443d51}
+html[data-theme='dark'] :where(.border-brand-200,.border-brand-300,.border-amber-200,.border-red-200){border-color:#62506c}
+html[data-theme='dark'] :where(.hover\:bg-gray-50,.hover\:bg-brand-50,.hover\:bg-brand-100):hover:not(.theme-hero *){background-color:#382e49}
+html[data-theme='dark'] :where(.hover\:text-brand-700):hover:not(.theme-hero *){color:#ddcaff}
+html[data-theme='dark'] .theme-toggle{background:#211d2d;color:#eeeaf5}

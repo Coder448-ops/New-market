@@ -11,7 +11,7 @@ export default async function Home(){
  const roots=categories.filter(c=>!c.parent_id).slice(0,12);
  return <div className="wrap pb-12 sm:pb-16">
  {!isDatabaseConfigured()&&<div className="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">Mahsulotlarni ko‘rish uchun PostgreSQL sozlanishi kerak.</div>}
- <section className="relative mt-5 flex min-h-[390px] overflow-hidden rounded-[24px] bg-[#efeaf4] sm:mt-7 sm:min-h-[430px] lg:min-h-[450px]">
+ <section className="theme-hero relative mt-5 flex min-h-[390px] overflow-hidden rounded-[24px] bg-[#efeaf4] sm:mt-7 sm:min-h-[430px] lg:min-h-[450px]">
   <Image src="/images/market-hero.webp" alt="" fill priority sizes="100vw" className="object-cover object-[65%_center]"/>
   <div className="absolute inset-0 bg-gradient-to-r from-[#f5f2f2] via-[#f5f2f2]/90 to-[#f5f2f2]/40 sm:via-[#f5f2f2]/80 sm:to-transparent"/>
   <div className="relative z-10 flex max-w-xl flex-col items-start justify-center px-6 py-12 sm:px-12 lg:px-14"><span className="rounded-full bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.18em] text-brand-700">NEX MARKET · SIZ UCHUN</span><h1 className="mt-6 text-4xl font-extrabold leading-[1.12] tracking-tight text-[#211936] sm:text-5xl lg:text-6xl">{banners[0]?.title || <>Har kuningizga<br/><span className="text-brand-700">yaxshi tanlov.</span></>}</h1><p className="mt-5 max-w-sm text-sm leading-6 text-gray-600 sm:text-base">{banners[0]?.subtitle || 'O‘zingiz uchun kerakli narsalarni bir joyda kashf eting.'}</p><div className="mt-7"><Link href={banners[0]?.link_url?.startsWith('/') ? banners[0].link_url : '/catalog'} className="primary gap-3">Katalogga o‘tish <ArrowRight size={17}/></Link></div></div>

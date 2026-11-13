@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import {Search,UserRound,Heart,ShoppingBag,MapPin,Grid2X2,Home} from 'lucide-react';
+import {ThemeToggle} from '@/components/layout/theme-toggle';
 import {getCategories} from '@/lib/database/catalog';
 export async function Header(){
  const categories=await getCategories();
@@ -9,7 +10,7 @@ export async function Header(){
  <Link href="/catalog" className="hidden items-center gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm font-bold text-brand-700 hover:bg-brand-100 md:flex"><Grid2X2 size={17}/> Katalog</Link>
  <form action="/search" role="search" className="order-3 flex w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-[#f9f9fb] transition focus-within:border-brand-600 md:order-none"><input name="q" aria-label="Mahsulot qidirish" placeholder="Mahsulotlarni qidiring" className="min-w-0 w-full bg-transparent px-4 py-3 text-sm outline-none"/><button aria-label="Qidirish" className="px-4 text-gray-600 hover:text-brand-700"><Search size={20}/></button></form>
  <nav aria-label="Hisob va xaridlar" className="ml-auto hidden shrink-0 items-center gap-6 text-[11px] font-medium text-gray-700 md:flex"><Link href="/account" className="flex flex-col items-center gap-1 hover:text-brand-700"><UserRound size={20}/>Profil</Link><Link href="/favorites" className="flex flex-col items-center gap-1 hover:text-brand-700"><Heart size={20}/>Saralangan</Link><Link href="/cart" className="flex flex-col items-center gap-1 hover:text-brand-700"><ShoppingBag size={20}/>Savat</Link></nav>
- <Link href="/account" aria-label="Profil" className="ml-auto rounded-xl border p-2.5 text-gray-700 md:hidden"><UserRound size={19}/></Link></div>
+ <div className="ml-auto md:ml-0"><ThemeToggle/></div><Link href="/account" aria-label="Profil" className="rounded-xl border p-2.5 text-gray-700 md:hidden"><UserRound size={19}/></Link></div>
  <nav aria-label="Mahsulot turkumlari" className="wrap hidden items-center gap-7 overflow-x-auto pb-4 text-[13px] text-gray-500 md:flex"><Link href="/catalog" className="whitespace-nowrap font-semibold text-brand-700">Barcha turkumlar</Link>{categories.filter(c=>!c.parent_id).slice(0,7).map(c=><Link key={c.id} className="whitespace-nowrap hover:text-brand-700" href={'/category/'+c.slug}>{c.name}</Link>)}</nav></header>
  <nav aria-label="Mobil menyu" className="fixed bottom-0 z-30 flex w-full justify-around border-t border-gray-100 bg-white/95 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 text-[10px] text-gray-600 backdrop-blur md:hidden">{mobileLinks.map(([Icon,label,href])=><Link key={href} href={href} className="flex min-w-0 flex-col items-center gap-1"><Icon size={20}/>{label}</Link>)}</nav></>
 }
