@@ -3,6 +3,7 @@
 const photos: Record<string, {author:string; source:string; license:string; licenseUrl:string; changes:string}> = {
  "01": {author:"Robert Nelson",source:"https://commons.wikimedia.org/wiki/File:Pixel_Buds_in_charging_case_with_product_box.jpg",license:"CC BY 2.0",licenseUrl:"https://creativecommons.org/licenses/by/2.0/",changes:"O‘lchami kichraytirilgan"},
  "02": {author:"Pittigrilli",source:"https://commons.wikimedia.org/wiki/File:JBL_Xtreme_Bluetooth_speaker_(28_cm_long)_viewed_from_an_oblique_front_angle.jpg",license:"CC BY-SA 4.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/4.0/",changes:"O‘lchami kichraytirilgan"},
+ "08": {author:"Imani Clovis",source:"https://commons.wikimedia.org/wiki/File:Minimal_flower_vase_(Unsplash).jpg",license:"CC0 1.0",licenseUrl:"https://creativecommons.org/publicdomain/zero/1.0/",changes:"O‘lchami kichraytirilgan"},
  "09": {author:"Alex Tang",source:"https://commons.wikimedia.org/wiki/File:Reed_diffuser.jpg",license:"CC0 1.0",licenseUrl:"https://creativecommons.org/publicdomain/zero/1.0/",changes:"O‘lchami kichraytirilgan"},
  "03": {author:"Louis PL",source:"https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_Watch_42mm.jpg",license:"CC BY-SA 4.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/4.0/",changes:"O‘lchami kichraytirilgan"},
  "04": {author:"SD hehua",source:"https://commons.wikimedia.org/wiki/File:Multi-USB_and_charger.jpg",license:"CC BY 4.0",licenseUrl:"https://creativecommons.org/licenses/by/4.0/",changes:"O‘lchami kichraytirilgan"},
