@@ -1,21 +1,23 @@
-import {describe,it,expect} from 'vitest';
-import {illustrativePhoto} from '@/lib/showcase/photo';
-describe('illustrative catalogue photos',()=>{
- it('maps only matching original test images',()=>{
-  expect(illustrativePhoto({sku:'NEX-SINOV-17',main_image:'/images/items/17.svg'})?.url).toBe('/images/photos/17.jpg');
-  expect(illustrativePhoto({sku:'NEX-SINOV-17',main_image:'https://example.com/my-image.jpg'})).toBeNull();
-  expect(illustrativePhoto({sku:'other',main_image:'/images/items/17.svg'})).toBeNull();
-  expect(illustrativePhoto({sku:'NEX-SINOV-18',main_image:'/images/items/17.svg'})).toBeNull();
- });
-});
+import { describe, it, expect } from 'vitest';
+import { existsSync } from 'node:fs';
+import { illustrativePhoto } from '@/lib/showcase/photo';
 
-describe('all new photos',()=>{
- it('resolves the correct original path and keeps custom images intact',()=>{
-  for(const id of ['01','02','03','04','05','06','08','09','10','11','13','14','16','21','23','25','27','28','29']) {
-   const sku=`NEX-SINOV-${id}`;
-   const ext=Number(id)<=10?'webp':'svg';
-   expect(illustrativePhoto({sku,main_image:`/images/items/${id}.${ext}`})?.url).toBe(`/images/photos/${id}.jpg`);
-   expect(illustrativePhoto({sku,main_image:'https://example.com/own.jpg'})).toBeNull();
-  }
- });
+describe('illustrative catalogue images', () => {
+  it('provides a real file for each original image and keeps custom images intact', () => {
+    for (let n = 1; n <= 30; n++) {
+      const id = String(n).padStart(2, '0');
+      const sku = `NEX-SINOV-${id}`;
+      const original = `/images/items/${id}.${n <= 10 ? 'webp' : 'svg'}`;
+      const image = illustrativePhoto({ sku, main_image: original });
+      expect(image, id).not.toBeNull();
+      expect(existsSync(`public${image!.url}`), id).toBe(true);
+      expect(illustrativePhoto({ sku, main_image: 'https://example.com/own.jpg' })).toBeNull();
+    }
+    expect(illustrativePhoto({ sku: 'other', main_image: '/images/items/17.svg' })).toBeNull();
+    expect(illustrativePhoto({ sku: 'NEX-SINOV-18', main_image: '/images/items/17.svg' })).toBeNull();
+  });
+  it('distinguishes generated images from licensed photographs', () => {
+    expect(illustrativePhoto({ sku: 'NEX-SINOV-13', main_image: '/images/items/13.svg' })).toEqual({ kind: 'generated', url: '/images/photos/13-ai.jpg' });
+    expect(illustrativePhoto({ sku: 'NEX-SINOV-17', main_image: '/images/items/17.svg' })?.kind).toBe('licensed');
+  });
 });
