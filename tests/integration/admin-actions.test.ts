@@ -9,7 +9,7 @@ vi.mock('server-only',()=>({}));
 vi.mock('@/lib/db',()=>({db:()=>({query:(sql:string,params?:unknown[])=>state.pg.query(sql,params)})}));
 vi.mock('@/lib/auth/session',()=>({requireAdmin:async()=>state.admin?{user:{id:'admin'}}:{error:'Forbidden'}}));
 vi.mock('next/cache',()=>({revalidatePath:()=>{}}));
-import {saveProduct,saveTaxonomy,updateAdminRecord,deleteProduct,importTestProducts} from '@/app/admin/actions';
+import {saveProduct,saveTaxonomy,updateAdminRecord,deleteProduct,importTestProducts,rejectOrder} from '@/app/admin/actions';
 const form=(data:Record<string,string>)=>{const f=new FormData();for(const [k,v] of Object.entries(data))f.set(k,v);return f};
 const product=(extra:Record<string,string>={})=>form({id:'',name:'Namuna emas',slug:'haqiqiy-mahsulot',sku:'',description:'',price:'10000',discount_price:'',stock:'5',main_image:'',category_id:'',brand_id:'',...extra});
 beforeAll(async()=>{state.pg=new PGlite({extensions:{pg_trgm,pgcrypto}});await state.pg.exec(readFileSync('database/migrations/001_init.sql','utf8'))},30000);
@@ -69,6 +69,41 @@ describe('admin catalogue actions',()=>{
   expect(result.rows[0].id).toBeTruthy();
   const row=(await state.pg.query<{stock:number}>('select stock from products where id=$1',[p.id])).rows[0];
   expect(row.stock).toBe(9);
+ });
+
+ it('rejects an order atomically, restores product and variant stock and releases coupon once',async()=>{
+  await importTestProducts(form({confirm:'on'}));
+  const p=(await state.pg.query<{id:string}>("select id from products where sku='NEX-SINOV-01'")).rows[0];
+  const v=(await state.pg.query<{id:string}>("insert into product_variants(product_id,name,price,stock) values($1,'Variant',1000,5) returning id",[p.id])).rows[0];
+  const coupon=(await state.pg.query<{id:string}>("insert into coupons(code,discount_type,discount_value,usage_limit) values('CANCEL-TEST','fixed',10,1) returning id")).rows[0];
+  const items=[{product_id:p.id,quantity:2},{product_id:p.id,variant_id:v.id,quantity:1}];
+  const order=(await state.pg.query<{id:string}>("select public.create_order(null,'Test','User','+998901234567',null,'Toshkent','Toshkent','Address','pickup','cod','',$1::jsonb,'CANCEL-TEST',null,0) as id",[JSON.stringify(items)])).rows[0];
+  expect((await state.pg.query<{stock:number}>('select stock from products where id=$1',[p.id])).rows[0].stock).toBe(8);
+  expect((await state.pg.query<{stock:number}>('select stock from product_variants where id=$1',[v.id])).rows[0].stock).toBe(4);
+  const request=form({id:order.id});
+  await rejectOrder(request);await rejectOrder(request);
+  expect((await state.pg.query<{status:string}>('select status from orders where id=$1',[order.id])).rows[0].status).toBe('cancelled');
+  expect((await state.pg.query<{stock:number}>('select stock from products where id=$1',[p.id])).rows[0].stock).toBe(10);
+  expect((await state.pg.query<{stock:number}>('select stock from product_variants where id=$1',[v.id])).rows[0].stock).toBe(5);
+  expect((await state.pg.query<{used_count:number}>('select used_count from coupons where id=$1',[coupon.id])).rows[0].used_count).toBe(0);
+  expect((await state.pg.query('select id from coupon_redemptions where order_id=$1',[order.id])).rows).toHaveLength(1);
+  await updateAdminRecord(form({id:order.id,type:'orders',value:'pending'}));
+  expect((await state.pg.query<{status:string}>('select status from orders where id=$1',[order.id])).rows[0].status).toBe('cancelled');
+ });
+ it('blocks unauthorised, dispatched and paid order rejections and status rollback',async()=>{
+  await importTestProducts(form({confirm:'on'}));
+  const p=(await state.pg.query<{id:string}>("select id from products where sku='NEX-SINOV-02'")).rows[0];
+  const items=JSON.stringify([{product_id:p.id,quantity:1}]);
+  const create=async()=>(await state.pg.query<{id:string}>("select public.create_order(null,'Test','User','+998901234567',null,'Toshkent','Toshkent','Address','pickup','cod','',$1::jsonb,'',null,0) as id",[items])).rows[0].id;
+  const shipped=await create(),paid=await create();
+  await state.pg.query("update orders set status='shipped' where id=$1",[shipped]);
+  await state.pg.query("update orders set payment_status='paid' where id=$1",[paid]);
+  state.admin=false;await expect(rejectOrder(form({id:shipped}))).rejects.toThrow('Forbidden');state.admin=true;
+  await updateAdminRecord(form({id:shipped,type:'orders',value:'pending'}));
+  await rejectOrder(form({id:shipped}));await rejectOrder(form({id:paid}));
+  expect((await state.pg.query<{status:string}>('select status from orders where id=$1',[shipped])).rows[0].status).toBe('shipped');
+  expect((await state.pg.query<{status:string}>('select status from orders where id=$1',[paid])).rows[0].status).toBe('pending');
+  expect((await state.pg.query<{stock:number}>('select stock from products where id=$1',[p.id])).rows[0].stock).toBe(8);
  });
 
 });

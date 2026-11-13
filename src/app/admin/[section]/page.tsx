@@ -3,6 +3,7 @@ import {db} from '@/lib/db';
 import {requireAdmin} from '@/lib/auth/session';
 import {updateAdminRecord,importTestProducts} from '../actions';
 import {ProductEditor} from '@/components/admin/product-editor';
+import {RejectOrderButton} from '@/components/admin/reject-order-button';
 import {TaxonomyEditor} from '@/components/admin/taxonomy-editor';
 import {formatPrice} from '@/lib/utils/format';
 import {ORDER_STATUS_LABELS,type OrderStatus,type Product,type Category,type Brand} from '@/types';
@@ -26,7 +27,9 @@ export default async function Page({params}:{params:Promise<{section:string}>}){
    {section==='promotions'&&<p className="mt-1 text-sm text-gray-500">Chegirma: {String(r.discount_value)} {r.discount_type==='percent'?'%':'so‘m'}</p>}
    {(section==='banners'||section==='settings')&&<p className="mt-1 text-sm text-gray-500">Bu bo‘lim ma’lumotlari hozircha faqat ko‘rish uchun.</p>}
    </div></div>
-   {['orders','inventory','reviews'].includes(section)&&!(section==='orders'&&r.status==='cancelled')&&<form action={updateAdminRecord} className="mt-4 flex flex-wrap gap-2"><input type="hidden" name="id" value={rowId}/><input type="hidden" name="type" value={section}/>{section==='orders'?<select aria-label="Buyurtma holati" name="value" defaultValue={String(r.status)} className="field max-w-52">{(['pending','confirmed','processing','shipped','delivered'] as OrderStatus[]).map(x=><option key={x} value={x}>{ORDER_STATUS_LABELS[x]}</option>)}</select>:section==='inventory'?<input aria-label="Ombor qoldig‘i" name="value" type="number" min="0" max="1000000" defaultValue={Number(r.stock)} className="field max-w-40"/>:<select aria-label="Sharh amali" name="value" className="field max-w-40"><option value="approve">Tasdiqlash</option><option value="delete">O‘chirish</option></select>}<button className="primary">Saqlash</button></form>}
+   {['orders','inventory','reviews'].includes(section)&&!(section==='orders'&&r.status==='cancelled')&&<form action={updateAdminRecord} className="mt-4 flex flex-wrap gap-2"><input type="hidden" name="id" value={rowId}/><input type="hidden" name="type" value={section}/>{section==='orders'?<select aria-label="Buyurtma holati" name="value" defaultValue={String(r.status)} className="field max-w-52">{(r.status==='delivered'?['delivered']:r.status==='shipped'?['shipped','delivered']:['pending','confirmed','processing','shipped','delivered'] as OrderStatus[]).map(x=><option key={x} value={x}>{ORDER_STATUS_LABELS[x as OrderStatus]}</option>)}</select>:section==='inventory'?<input aria-label="Ombor qoldig‘i" name="value" type="number" min="0" max="1000000" defaultValue={Number(r.stock)} className="field max-w-40"/>:<select aria-label="Sharh amali" name="value" className="field max-w-40"><option value="approve">Tasdiqlash</option><option value="delete">O‘chirish</option></select>}<button className="primary">Saqlash</button></form>}
+   {section==='orders'&&['pending','confirmed','processing'].includes(String(r.status))&&r.payment_method==='cod'&&r.payment_status==='unpaid'&&<div className="mt-3"><RejectOrderButton id={rowId}/><p className="mt-2 text-xs text-gray-500">Rad etilganda mahsulotlar omborga qaytariladi.</p></div>}
+   {section==='orders'&&r.status!=='cancelled'&&(!['pending','confirmed','processing'].includes(String(r.status))||r.payment_method!=='cod'||r.payment_status!=='unpaid')&&<p className="mt-3 text-xs text-gray-500">Yuborilgan, yetkazilgan yoki to‘langan buyurtmani bu yerda rad etib bo‘lmaydi.</p>}
   </div>
  })}
  {data.length===0&&<p className="rounded-2xl bg-gray-50 p-8 text-center text-sm text-gray-500">Hozircha yozuvlar yo‘q.</p>}

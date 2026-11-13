@@ -39,5 +39,5 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   processing: "Tayyorlanmoqda",
   shipped: "Yuborilgan",
   delivered: "Yetkazilgan",
-  cancelled: "Bekor qilingan",
+  cancelled: "Rad etilgan / bekor qilingan",
 };
