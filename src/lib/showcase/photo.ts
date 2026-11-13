@@ -12,7 +12,6 @@ const photos: Record<string, {author:string; source:string; license:string; lice
  "10": {author:"Hey Paul",source:"https://commons.wikimedia.org/wiki/File:Baskets_Wicker.jpg",license:"CC BY 2.0",licenseUrl:"https://creativecommons.org/licenses/by/2.0/",changes:"O‘lchami kichraytirilgan"},
  "11": {author:"stux",source:"https://commons.wikimedia.org/wiki/File:Cream_in_round_container.jpg",license:"CC0 1.0",licenseUrl:"https://creativecommons.org/publicdomain/zero/1.0/",changes:"O‘lchami kichraytirilgan"},
  "14": {author:"Ubcule",source:"https://commons.wikimedia.org/wiki/File:Neutrogena_Norwegian_Formula_Hand_Cream.jpg",license:"CC BY-SA 4.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/4.0/",changes:"O‘lchami kichraytirilgan"},
- "16": {author:"Bongoramsey",source:"https://commons.wikimedia.org/wiki/File:Tote_handbag_Etienne_Aigner.JPG",license:"CC BY-SA 3.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/3.0/",changes:"O‘lchami kichraytirilgan"},
  "21": {author:"Quercus acuta",source:"https://commons.wikimedia.org/wiki/File:Vintage_VICTOR_Coffee_Mug.jpg",license:"CC BY-SA 4.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/4.0/",changes:"O‘lchami kichraytirilgan"},
  "25": {author:"Daniel Sone / National Cancer Institute",source:"https://commons.wikimedia.org/wiki/File:Dinner_plates.jpg",license:"Public domain",licenseUrl:"https://creativecommons.org/publicdomain/mark/1.0/",changes:"O‘lchami kichraytirilgan"},
  "27": {author:"Gausanchennai",source:"https://commons.wikimedia.org/wiki/File:Yoga_mat.jpg",license:"CC BY-SA 4.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/4.0/",changes:"O‘lchami kichraytirilgan"},
@@ -23,7 +22,7 @@ const photos: Record<string, {author:string; source:string; license:string; lice
  '20': {author:'Alberto Ziveri',source:'https://commons.wikimedia.org/wiki/File:Herschel_Supply_Co._backpack.jpg',license:'CC BY 2.0',licenseUrl:'https://creativecommons.org/licenses/by/2.0/',changes:'Manbadagi kesilgan versiya'},
  '26': {author:'Sjennings2',source:'https://commons.wikimedia.org/wiki/File:Waterbottle.jpg',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',changes:'O‘lchami kichraytirilgan'},
 };
-const generated = new Set(['07','12','13','15','22','23','24','28','30']);
+const generated = new Set(['07','12','13','15','16','22','23','24','28','30']);
 
 export function illustrativePhoto(product:{sku?:string|null;main_image?:string|null}) {
  const match=product.sku?.match(/^NEX-SINOV-(\d{2})$/);
