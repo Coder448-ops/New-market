@@ -16,12 +16,11 @@ const photos: Record<string, {author:string; source:string; license:string; lice
  "25": {author:"Daniel Sone / National Cancer Institute",source:"https://commons.wikimedia.org/wiki/File:Dinner_plates.jpg",license:"Public domain",licenseUrl:"https://creativecommons.org/publicdomain/mark/1.0/",changes:"O‘lchami kichraytirilgan"},
  "27": {author:"Gausanchennai",source:"https://commons.wikimedia.org/wiki/File:Yoga_mat.jpg",license:"CC BY-SA 4.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/4.0/",changes:"O‘lchami kichraytirilgan"},
  "29": {author:"Harsh Jadav",source:"https://commons.wikimedia.org/wiki/File:Leather_duffel_bag_on_the_ground_(Unsplash).jpg",license:"CC0 1.0",licenseUrl:"https://creativecommons.org/publicdomain/zero/1.0/",changes:"O‘lchami kichraytirilgan"},
- '18': {author:'Avacalop',source:'https://commons.wikimedia.org/wiki/File:Sun_glasses.jpg',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',changes:'O‘lchami kichraytirilgan'},
  '19': {author:'smittenkittenorig',source:'https://commons.wikimedia.org/wiki/File:Red_infinity_scarf.jpg',license:'CC BY 2.0',licenseUrl:'https://creativecommons.org/licenses/by/2.0/',changes:'O‘lchami kichraytirilgan'},
  '20': {author:'Alberto Ziveri',source:'https://commons.wikimedia.org/wiki/File:Herschel_Supply_Co._backpack.jpg',license:'CC BY 2.0',licenseUrl:'https://creativecommons.org/licenses/by/2.0/',changes:'Manbadagi kesilgan versiya'},
  '26': {author:'Sjennings2',source:'https://commons.wikimedia.org/wiki/File:Waterbottle.jpg',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',changes:'O‘lchami kichraytirilgan'},
 };
-const generated = new Set(['07','12','13','15','16','17','22','23','24','28','30']);
+const generated = new Set(['07','12','13','15','16','17','18','22','23','24','28','30']);
 
 export function illustrativePhoto(product:{sku?:string|null;main_image?:string|null}) {
  const match=product.sku?.match(/^NEX-SINOV-(\d{2})$/);
