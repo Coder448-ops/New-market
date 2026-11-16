@@ -22,6 +22,9 @@ describe('illustrative catalogue images', () => {
     expect(illustrativePhoto({ sku: 'NEX-SINOV-28', main_image: '/images/items/28.svg' })).toEqual({ kind: 'generated', url: '/images/photos/28-ai.jpg' });
     expect(illustrativePhoto({ sku: 'NEX-SINOV-17', main_image: '/images/items/17.svg' })).toEqual({ kind: 'generated', url: '/images/photos/17-ai.jpg' });
     expect(illustrativePhoto({ sku: 'NEX-SINOV-18', main_image: '/images/items/18.svg' })).toEqual({ kind: 'generated', url: '/images/photos/18-ai.jpg' });
+    for (const [id, ext] of [['02','webp'], ['26','svg'], ['29','svg']]) {
+      expect(illustrativePhoto({ sku: `NEX-SINOV-${id}`, main_image: `/images/items/${id}.${ext}` })).toEqual({kind: 'generated', url: `/images/photos/${id}-ai.jpg`});
+    }
     expect(illustrativePhoto({ sku: 'NEX-SINOV-19', main_image: '/images/items/19.svg' })?.kind).toBe('licensed');
   });
 });
